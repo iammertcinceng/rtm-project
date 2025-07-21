@@ -9,7 +9,7 @@ const Footer = () => {
         <div className='flex-1 flex flex-col justify-start mr-10'>
           <div className="flex items-center mb-6">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
-              <span className="text-white font-bold text-2xl">R</span>
+              <span className="text-white text-2xl font-bold">R</span>
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-800">RTM Klinik</h2>
