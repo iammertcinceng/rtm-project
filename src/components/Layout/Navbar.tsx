@@ -1,13 +1,16 @@
-import React from 'react'
+import React, { useState, useEffect } from "react";
 import menu from '../../assets/menu.svg'
 import close from '../../assets/close.svg'
 import { navLinks } from '../../constants'
 import styles from '../../style'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { db } from "../../firebase/config";
+import { doc, getDoc } from "firebase/firestore";
 
 const Navbar = () => {
-  const [toggle, setToggle] = React.useState(false)
+  const [toggle, setToggle] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -31,10 +34,27 @@ const Navbar = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        try {
+          const ref = doc(db, "patients", user.uid);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            setUserProfile(snap.data());
+          }
+        } catch (error) {
+          console.error("Profil çekme hatası:", error);
+        }
+      }
+    };
+    fetchUserProfile();
+  }, [user]);
+
   const getUserDisplay = () => {
     if (!user) return null;
-    if (user.displayName) return user.displayName;
-    if (user.email) return user.email.split('@')[0];
+    if (userProfile?.fullName) return userProfile.fullName;
+    if (userProfile?.email) return userProfile.email.split('@')[0];
     return 'Hesabım';
   };
 

@@ -184,98 +184,155 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-16 px-4 relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-      {/* Arka plan efektleri */}
-      <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl -z-10"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-cyan-500/10 rounded-full blur-3xl -z-10"></div>
-      <div className="absolute inset-0 opacity-10 -z-10">
-        <div className="h-full w-full bg-grid-pattern"></div>
+    <div className="min-h-screen pt-32 pb-20 px-4 relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+      {/* Enhanced Background Effects */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-10 w-40 h-40 bg-gradient-to-br from-blue-400/30 to-purple-400/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute top-40 right-20 w-32 h-32 bg-gradient-to-br from-cyan-400/30 to-blue-400/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-20 left-1/4 w-36 h-36 bg-gradient-to-br from-purple-400/30 to-pink-400/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+        <div className="absolute bottom-40 right-1/3 w-28 h-28 bg-gradient-to-br from-green-400/30 to-cyan-400/30 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-6000"></div>
+        
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="h-full w-full bg-grid-pattern"></div>
+        </div>
       </div>
       
       {/* Ana Container */}
       <div className="max-w-4xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Hasta Profili
-          </h1>
-          <p className="text-lg text-gray-600">
-            Profil bilgilerinizi güncelleyebilirsiniz
-          </p>
-          
-          {/* Çıkış butonu */}
-          <div className="flex justify-end mt-6">
+        {/* Enhanced Header */}
+        <div className="relative mb-12">
+          {/* Çıkış butonu - Sağ üst köşe */}
+          <div className="absolute top-0 right-0 z-20">
             <button
               type="button"
               onClick={handleLogout}
-              className="px-6 py-2 rounded-xl font-semibold text-base bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="inline-flex cursor-pointer items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm bg-red-500/20 backdrop-blur-sm border border-red-400/40 text-red-200 shadow-lg hover:bg-red-500/40 hover:border-red-400/60 hover:text-red-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
             >
+              <span>🚪</span>
               Çıkış Yap
             </button>
           </div>
+          
+          {/* Merkezi içerik */}
+          <div className="text-center pt-8">
+            <div className="relative inline-block mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 relative drop-shadow-lg">
+                Hasta <span className="text-gradient bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Profili</span>
+              </h1>
+              
+              {/* Welcome Badge - Başlığın tam altında */}
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg transform hover:scale-105 transition-all duration-300">
+                <span>👋</span>
+                <span>Hoş Geldiniz</span>
+              </div>
+              
+              {/* Decorative elements around title */}
+              <div className="absolute -top-3 -left-3 w-2 h-2 bg-blue-400 rounded-full animate-pulse opacity-60"></div>
+              <div className="absolute -top-1 -right-4 w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping opacity-50"></div>
+              <div className="absolute -bottom-3 left-1/4 w-1 h-1 bg-purple-400 rounded-full animate-bounce opacity-70"></div>
+            </div>
+            
+            <p className="text-lg text-white/90 font-medium leading-relaxed max-w-xl mx-auto drop-shadow-sm">
+              Kişisel bilgilerinizi güncelleyerek sağlık hizmetlerimizden
+              <br className="hidden sm:block" />
+              en iyi şekilde yararlanabilirsiniz.
+            </p>
+          </div>
         </div>
 
-        {/* Form Container */}
-        <div className="bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl rounded-3xl overflow-hidden">
-          <form onSubmit={handleSave} className="p-8 md:p-12">
+        {/* Premium Form Container */}
+        <div className="bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl rounded-[2rem] overflow-hidden relative">
+          {/* Enhanced Form background pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 transform rotate-12 scale-150"></div>
+            <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-tl from-cyan-100 to-blue-100 transform -rotate-12 scale-150"></div>
+          </div>
+          
+          {/* Form Header */}
+          <div className="relative z-10 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200/50 p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-xl">📋</span>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">Profil Bilgileri</h2>
+                  <p className="text-gray-600 text-sm">Bilgilerinizi güncel tutun</p>
+                </div>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                Güvenli Form
+              </div>
+            </div>
+          </div>
+          
+          <form onSubmit={handleSave} className="p-8 md:p-12 relative z-10 font-inter">
             {/* Kişisel Bilgiler Bölümü */}
-            <div className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-3 border-b border-gray-200">
-                Kişisel Bilgiler
-              </h2>
+            <div className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">👤</span>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Kişisel Bilgiler
+                </h2>
+              </div>
+              <div className="w-full h-px bg-gradient-to-r from-blue-200 via-purple-200 to-transparent mb-8"></div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Ad Soyad *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Ad Soyad *</label>
                   <input 
                     name="fullName" 
                     value={profile.fullName || ''} 
                     onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required 
                     placeholder="Adınızı ve soyadınızı giriniz"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">TC Kimlik No *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">TC Kimlik No *</label>
                   <input 
                     name="tcNo" 
                     value={profile.tcNo || ''} 
                     onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required 
                     maxLength={11}
                     placeholder="11 haneli TC kimlik numaranız"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Baba Adı *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Baba Adı *</label>
                   <input 
                     name="fatherName" 
                     value={profile.fatherName || ''} 
                     onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required 
                     placeholder="Babanızın adı"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Doğum Tarihi *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Doğum Tarihi *</label>
                   <input 
                     name="birthDate" 
                     value={profile.birthDate || ''} 
                     onChange={handleChange} 
                     type="date" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required 
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Cinsiyet *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Cinsiyet *</label>
                   <select 
                     name="gender" 
                     value={profile.gender || ''} 
                     onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required
                   >
                     <option value="">Seçiniz</option>
@@ -285,12 +342,12 @@ export default function ProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Doğum Yeri *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Doğum Yeri *</label>
                   <select 
                     name="birthPlace" 
                     value={profile.birthPlace || ''} 
                     onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required
                   >
                     <option value="">Seçiniz</option>
@@ -300,12 +357,12 @@ export default function ProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Kayıtlı İl (Nüfus) *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Kayıtlı İl (Nüfus) *</label>
                   <select 
                     name="registeredProvince" 
                     value={profile.registeredProvince || ''} 
                     onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required
                   >
                     <option value="">Seçiniz</option>
@@ -318,52 +375,58 @@ export default function ProfilePage() {
             </div>
 
             {/* İletişim Bilgileri Bölümü */}
-            <div className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-3 border-b border-gray-200">
-                İletişim Bilgileri
-              </h2>
+            <div className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">📞</span>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  İletişim Bilgileri
+                </h2>
+              </div>
+              <div className="w-full h-px bg-gradient-to-r from-green-200 via-emerald-200 to-transparent mb-8"></div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Telefon *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Telefon *</label>
                   <input 
                     name="phone" 
                     value={profile.phone || ''} 
                     onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required 
                     placeholder="05XX XXX XX XX"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Acil Durum Telefonu *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Acil Durum Telefonu *</label>
                   <input 
                     name="emergencyPhone" 
                     value={profile.emergencyPhone || ''} 
                     onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required 
                     placeholder="05XX XXX XX XX"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">E-posta *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">E-posta *</label>
                   <input 
                     name="email" 
                     value={profile.email || ''} 
                     onChange={handleChange} 
                     type="email" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required 
                     placeholder="ornek@email.com"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Adres *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Adres *</label>
                   <input 
                     name="address" 
                     value={profile.address || ''} 
                     onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required 
                     placeholder="Tam adresinizi giriniz"
                   />
@@ -372,19 +435,25 @@ export default function ProfilePage() {
             </div>
 
             {/* Başvuru Bilgileri Bölümü */}
-            <div className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-3 border-b border-gray-200">
-                Başvuru Bilgileri
-              </h2>
+            <div className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">📋</span>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Başvuru Bilgileri
+                </h2>
+              </div>
+              <div className="w-full h-px bg-gradient-to-r from-orange-200 via-red-200 to-transparent mb-8"></div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Kayıt Tarihi *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Kayıt Tarihi *</label>
                   <input 
                     name="registrationDate" 
                     value={profile.registrationDate || ''} 
                     onChange={handleChange} 
                     type="date" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white transition-all duration-200" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
                     required 
                   />
                 </div>
@@ -430,22 +499,32 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Kaydet butonu */}
-            <div className="pt-6">
-              <button
-                type="submit"
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-lg shadow-lg hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                disabled={saving}
-              >
-                {saving ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                    Kaydediliyor...
-                  </div>
-                ) : (
-                  'Profili Kaydet'
-                )}
-              </button>
+            {/* Enhanced Save Button */}
+            <div className="pt-8 border-t border-gray-200/50">
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                  Tüm bilgiler güvenli şekilde saklanır
+                </div>
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto min-w-[200px] py-4 px-8 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-lg shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden"
+                  disabled={saving}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  {saving ? (
+                    <div className="flex items-center justify-center relative z-10">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                      Kaydediliyor...
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 relative z-10">
+                      <span>💾</span>
+                      Profili Kaydet
+                    </div>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>
