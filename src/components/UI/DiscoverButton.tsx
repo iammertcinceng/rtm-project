@@ -1,12 +1,12 @@
 import React from 'react'
 import styles from '../../style'
 
-const Button = ({ styles: customStyles }) => {
+const DiscoverButton = ({ styles: customStyles }: { styles: string }) => {
   return (
-    <button type='button' className={`${styles.primaryButton} ${customStyles}`}>
+    <button type='button' className={`cursor-pointer ${styles.primaryButton} ${customStyles}`}>
       Platformu Keşfet
     </button>
   )
 }
 
-export default Button
+export default DiscoverButton

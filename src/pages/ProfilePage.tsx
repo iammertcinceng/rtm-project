@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { db } from "../../firebase/config";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { TURKIYE_CITIES } from "../../types/TurkiyeCities";
+import { db } from "../firebase/config";
+import { TURKIYE_CITIES } from "../types/TurkiyeCities";
+import { useAuth } from "../context/AuthContext";
 
 interface Profile {
   fullName: string;
@@ -32,17 +32,17 @@ export default function ProfilePage() {
 
   useEffect(() => {
     console.log("🔄 ProfilePage useEffect çalıştı", { loading, user: user?.uid });
-    
+
     if (!loading && user) {
       const fetchProfile = async () => {
         console.log("📥 Profil çekme işlemi başladı", { userId: user.uid });
         try {
           const ref = doc(db, "patients", user.uid);
           console.log("🔍 Firestore referansı oluşturuldu:", ref.path);
-          
+
           const snap = await getDoc(ref);
           console.log("📄 Firestore sorgusu tamamlandı", { exists: snap.exists() });
-          
+
           if (snap.exists()) {
             const data = snap.data() as Profile;
             setProfile(data);
@@ -64,7 +64,7 @@ export default function ProfilePage() {
               email: user.email || '',
               emergencyPhone: '',
             };
-            
+
             await setDoc(ref, newProfile);
             setProfile(newProfile);
             console.log("✅ Yeni profil oluşturuldu ve kaydedildi");
@@ -85,15 +85,15 @@ export default function ProfilePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     console.log("📝 Input değişikliği:", { name: e.target.name, value: e.target.value });
-    
+
     if (!profile) return;
-    
+
     let value = e.target.value;
     const name = e.target.name;
 
     // Özel formatlamalar
     if (name === 'fullName' || name === 'fatherName') {
-      value = value.split(' ').map(word => 
+      value = value.split(' ').map(word =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ');
     } else if (name === 'phone' || name === 'emergencyPhone') {
@@ -113,25 +113,31 @@ export default function ProfilePage() {
     console.log("💾 Kaydetme işlemi başladı");
     console.log("📊 Mevcut profil verisi:", profile);
     console.log("👤 Kullanıcı bilgisi:", { uid: user?.uid, email: user?.email });
-    
+
     setSaving(true);
     setError("");
-    
+
     try {
       if (user && profile) {
         console.log("🔄 Firestore güncelleme başladı", { userId: user.uid });
         const ref = doc(db, "patients", user.uid);
-        
+
         const updateData = {
           ...profile,
           updatedAt: new Date().toISOString()
         };
-        
+
         console.log("📤 Gönderilecek veri:", updateData);
         await updateDoc(ref, updateData);
         console.log("✅ Profil başarıyla güncellendi");
-        
+
         alert("Profil başarıyla güncellendi!");
+        //toast a çevir.
+
+        // 1 saniye sonra ana sayfaya yönlendir
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
       } else {
         console.log("❌ Kullanıcı veya profil verisi eksik", { user: !!user, profile: !!profile });
         throw new Error("Kullanıcı veya profil verisi eksik");
@@ -191,13 +197,13 @@ export default function ProfilePage() {
         <div className="absolute top-40 right-20 w-32 h-32 bg-gradient-to-br from-cyan-400/30 to-blue-400/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
         <div className="absolute bottom-20 left-1/4 w-36 h-36 bg-gradient-to-br from-purple-400/30 to-pink-400/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
         <div className="absolute bottom-40 right-1/3 w-28 h-28 bg-gradient-to-br from-green-400/30 to-cyan-400/30 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-6000"></div>
-        
+
         {/* Grid pattern overlay */}
         <div className="absolute inset-0 opacity-5">
           <div className="h-full w-full bg-grid-pattern"></div>
         </div>
       </div>
-      
+
       {/* Ana Container */}
       <div className="max-w-4xl mx-auto relative z-10">
         {/* Enhanced Header */}
@@ -207,32 +213,34 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex cursor-pointer items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm bg-red-500/20 backdrop-blur-sm border border-red-400/40 text-red-200 shadow-lg hover:bg-red-500/40 hover:border-red-400/60 hover:text-red-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="inline-flex cursor-pointer items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm bg-red-400/50 backdrop-blur-sm border border-red-500/20 text-white shadow-lg hover:bg-red-500/50 hover:border-red-400/50 hover:text-red-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
             >
-              <span>🚪</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>    {/* daha sonra değiştirilebilir */}
               Çıkış Yap
             </button>
           </div>
-          
+
           {/* Merkezi içerik */}
           <div className="text-center pt-8">
             <div className="relative inline-block mb-8">
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 relative drop-shadow-lg">
                 Hasta <span className="text-gradient bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Profili</span>
               </h1>
-              
+
               {/* Welcome Badge - Başlığın tam altında */}
               <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg transform hover:scale-105 transition-all duration-300">
                 <span>👋</span>
                 <span>Hoş Geldiniz</span>
               </div>
-              
+
               {/* Decorative elements around title */}
               <div className="absolute -top-3 -left-3 w-2 h-2 bg-blue-400 rounded-full animate-pulse opacity-60"></div>
               <div className="absolute -top-1 -right-4 w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping opacity-50"></div>
               <div className="absolute -bottom-3 left-1/4 w-1 h-1 bg-purple-400 rounded-full animate-bounce opacity-70"></div>
             </div>
-            
+
             <p className="text-lg text-white/90 font-medium leading-relaxed max-w-xl mx-auto drop-shadow-sm">
               Kişisel bilgilerinizi güncelleyerek sağlık hizmetlerimizden
               <br className="hidden sm:block" />
@@ -248,7 +256,7 @@ export default function ProfilePage() {
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 transform rotate-12 scale-150"></div>
             <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-tl from-cyan-100 to-blue-100 transform -rotate-12 scale-150"></div>
           </div>
-          
+
           {/* Form Header */}
           <div className="relative z-10 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200/50 p-6">
             <div className="flex items-center justify-between">
@@ -267,7 +275,7 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-          
+
           <form onSubmit={handleSave} className="p-8 md:p-12 relative z-10 font-inter">
             {/* Kişisel Bilgiler Bölümü */}
             <div className="mb-12">
@@ -283,56 +291,56 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Ad Soyad *</label>
-                  <input 
-                    name="fullName" 
-                    value={profile.fullName || ''} 
-                    onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
-                    required 
+                  <input
+                    name="fullName"
+                    value={profile.fullName || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
                     placeholder="Adınızı ve soyadınızı giriniz"
                   />
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">TC Kimlik No *</label>
-                  <input 
-                    name="tcNo" 
-                    value={profile.tcNo || ''} 
-                    onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
-                    required 
+                  <input
+                    name="tcNo"
+                    value={profile.tcNo || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
                     maxLength={11}
                     placeholder="11 haneli TC kimlik numaranız"
                   />
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Baba Adı *</label>
-                  <input 
-                    name="fatherName" 
-                    value={profile.fatherName || ''} 
-                    onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
-                    required 
+                  <input
+                    name="fatherName"
+                    value={profile.fatherName || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
                     placeholder="Babanızın adı"
                   />
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Doğum Tarihi *</label>
-                  <input 
-                    name="birthDate" 
-                    value={profile.birthDate || ''} 
-                    onChange={handleChange} 
-                    type="date" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
-                    required 
+                  <input
+                    name="birthDate"
+                    value={profile.birthDate || ''}
+                    onChange={handleChange}
+                    type="date"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
                   />
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Cinsiyet *</label>
-                  <select 
-                    name="gender" 
-                    value={profile.gender || ''} 
-                    onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
+                  <select
+                    name="gender"
+                    value={profile.gender || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
                     required
                   >
                     <option value="">Seçiniz</option>
@@ -343,11 +351,11 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Doğum Yeri *</label>
-                  <select 
-                    name="birthPlace" 
-                    value={profile.birthPlace || ''} 
-                    onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
+                  <select
+                    name="birthPlace"
+                    value={profile.birthPlace || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
                     required
                   >
                     <option value="">Seçiniz</option>
@@ -358,11 +366,11 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Kayıtlı İl (Nüfus) *</label>
-                  <select 
-                    name="registeredProvince" 
-                    value={profile.registeredProvince || ''} 
-                    onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
+                  <select
+                    name="registeredProvince"
+                    value={profile.registeredProvince || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
                     required
                   >
                     <option value="">Seçiniz</option>
@@ -388,46 +396,46 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Telefon *</label>
-                  <input 
-                    name="phone" 
-                    value={profile.phone || ''} 
-                    onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
-                    required 
+                  <input
+                    name="phone"
+                    value={profile.phone || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
                     placeholder="05XX XXX XX XX"
                   />
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Acil Durum Telefonu *</label>
-                  <input 
-                    name="emergencyPhone" 
-                    value={profile.emergencyPhone || ''} 
-                    onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
-                    required 
+                  <input
+                    name="emergencyPhone"
+                    value={profile.emergencyPhone || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
                     placeholder="05XX XXX XX XX"
                   />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">E-posta *</label>
-                  <input 
-                    name="email" 
-                    value={profile.email || ''} 
-                    onChange={handleChange} 
-                    type="email" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
-                    required 
+                  <input
+                    name="email"
+                    value={profile.email || ''}
+                    onChange={handleChange}
+                    type="email"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
                     placeholder="ornek@email.com"
                   />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Adres *</label>
-                  <input 
-                    name="address" 
-                    value={profile.address || ''} 
-                    onChange={handleChange} 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
-                    required 
+                  <input
+                    name="address"
+                    value={profile.address || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
                     placeholder="Tam adresinizi giriniz"
                   />
                 </div>
@@ -448,39 +456,39 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Kayıt Tarihi *</label>
-                  <input 
-                    name="registrationDate" 
-                    value={profile.registrationDate || ''} 
-                    onChange={handleChange} 
-                    type="date" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md" 
-                    required 
+                  <input
+                    name="registrationDate"
+                    value={profile.registrationDate || ''}
+                    onChange={handleChange}
+                    type="date"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
                   />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-gray-700 font-semibold mb-2 text-sm">Başvuru Nedeni *</label>
                   <div className="flex gap-8 mt-3">
                     <label className="flex items-center cursor-pointer group">
-                      <input 
-                        type="radio" 
-                        name="visitReason" 
-                        value="muayene" 
-                        checked={profile.visitReason === 'muayene'} 
-                        onChange={handleChange} 
-                        className="mr-3 w-5 h-5 text-cyan-600 focus:ring-cyan-500 focus:ring-2" 
-                        required 
+                      <input
+                        type="radio"
+                        name="visitReason"
+                        value="muayene"
+                        checked={profile.visitReason === 'muayene'}
+                        onChange={handleChange}
+                        className="mr-3 w-5 h-5 text-cyan-600 focus:ring-cyan-500 focus:ring-2"
+                        required
                       />
                       <span className="text-gray-700 font-medium group-hover:text-cyan-600 transition-colors">Muayene</span>
                     </label>
                     <label className="flex items-center cursor-pointer group">
-                      <input 
-                        type="radio" 
-                        name="visitReason" 
-                        value="kontrol" 
-                        checked={profile.visitReason === 'kontrol'} 
-                        onChange={handleChange} 
-                        className="mr-3 w-5 h-5 text-cyan-600 focus:ring-cyan-500 focus:ring-2" 
-                        required 
+                      <input
+                        type="radio"
+                        name="visitReason"
+                        value="kontrol"
+                        checked={profile.visitReason === 'kontrol'}
+                        onChange={handleChange}
+                        className="mr-3 w-5 h-5 text-cyan-600 focus:ring-cyan-500 focus:ring-2"
+                        required
                       />
                       <span className="text-gray-700 font-medium group-hover:text-cyan-600 transition-colors">Kontrol</span>
                     </label>

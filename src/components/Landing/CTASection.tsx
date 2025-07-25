@@ -31,10 +31,10 @@ const CTA = () => {
       
       <div className={`${styles.flexCenter} sm:ml-10 ml-0 mt-8 sm:mt-0`}>
         <div className="flex flex-col gap-4">
-          <button className={`${styles.secondaryButton} bg-white text-blue-600 border-white hover:bg-blue-50`}>
+          <button className={`${styles.secondaryButton} cursor-pointer bg-white text-blue-600 border-white hover:bg-blue-50`}>
             Demo Talep Et
           </button>
-          <button className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-blue-600 transition-all duration-300">
+          <button className="cursor-pointer bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-blue-600 transition-all duration-300">
             İletişime Geç
           </button>
         </div>

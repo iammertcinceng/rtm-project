@@ -148,7 +148,7 @@ const Hero: React.FC<HeroSectionProps> = ({ onShowModal }) => {
             <div className="flex flex-wrap gap-4 pt-8">
               <button
                 onClick={onShowModal}
-                className="group px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl text-white font-semibold text-lg shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-105"
+                className="cursor-pointer group px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl text-white font-semibold text-lg shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-105"
               >
                 <div className="flex items-center gap-2">
                   <span>🚀</span>
@@ -156,7 +156,7 @@ const Hero: React.FC<HeroSectionProps> = ({ onShowModal }) => {
                 </div>
               </button>
 
-              <button className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white font-semibold text-lg hover:bg-white/20 transition-all duration-300">
+              <button className="cursor-pointer px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white font-semibold text-lg hover:bg-white/20 transition-all duration-300">
                 <div className="flex items-center gap-2">
                   <span>📋</span>
                   <span>Daha Fazla Bilgi</span>
@@ -299,7 +299,7 @@ const Hero: React.FC<HeroSectionProps> = ({ onShowModal }) => {
       }`}>
         <button
           onClick={scrollToNext}
-          className="flex flex-col items-center gap-2 text-white/60 hover:text-white/90 transition-colors duration-300"
+          className=" flex flex-col items-center gap-2 text-white/60 hover:text-white/90 transition-colors duration-300"
         >
           <span className="text-sm font-medium">Keşfetmeye Devam Et</span>
           <div className="w-6 h-10 border-2 border-current rounded-full flex justify-center">

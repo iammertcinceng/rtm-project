@@ -41,7 +41,7 @@ const Testimonials = () => {
     <section
       ref={sectionRef}
       id='testimonials'
-      className={`${styles.paddingY} ${styles.flexCenter} flex-col relative overflow-hidden`}
+      className={`${styles.paddingY} ${styles.flexCenter} flex-col relative`}
 
     >
       {/* Enhanced animated background */}

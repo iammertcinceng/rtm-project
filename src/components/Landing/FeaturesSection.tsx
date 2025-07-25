@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { features } from '../../constants'
 import styles, { layout } from '../../style'
-import Button from '../UI/DiscoverButton'
+import DiscoverButton from '../UI/DiscoverButton'
 
 type Feature = {
   id: string;
@@ -71,24 +71,23 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, content, index }
   };
 
   return (
-    <div 
+    <div
       ref={cardRef}
-      className={`${index !== features.length - 1 ? 'mb-8' : 'mb-0'} group transition-all duration-700 ${
-        isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
-      }`}
+      className={`${index !== features.length - 1 ? 'mb-8' : 'mb-0'} group transition-all duration-700 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+        }`}
       style={{ transitionDelay: `${index * 0.2}s` }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-lg border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 overflow-hidden">
+      <div className="relative bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-lg border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
         {/* Animated background pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 transform rotate-12 scale-150"></div>
         </div>
-        
+
         {/* Glow effect on hover */}
         <div className={`absolute inset-0 bg-gradient-to-br ${getGradient()} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-3xl`}></div>
-        
+
         {/* Floating particles */}
         <div className="absolute top-4 right-4 w-1 h-1 bg-blue-400 rounded-full animate-ping opacity-60"></div>
         <div className="absolute top-8 right-8 w-0.5 h-0.5 bg-purple-400 rounded-full animate-pulse opacity-40"></div>
@@ -100,17 +99,17 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, content, index }
             <div className={`w-20 h-20 rounded-2xl ${styles.flexCenter} bg-gradient-to-br ${getGradient()} shadow-lg group-hover:shadow-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 relative overflow-hidden`}>
               {/* Icon shine effect */}
               <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              
+
               <span className="text-white text-3xl filter drop-shadow-sm relative z-10 group-hover:scale-110 transition-transform duration-300">
                 {getIcon()}
               </span>
-              
+
               {/* Ripple effect */}
               {isHovered && (
                 <div className="absolute inset-0 rounded-2xl border-2 border-white/50 animate-ping"></div>
               )}
             </div>
-            
+
             {/* Glow effect around icon */}
             <div className={`absolute inset-0 w-20 h-20 bg-gradient-to-br ${getGradient()} rounded-2xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500`}></div>
           </div>
@@ -121,16 +120,15 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, content, index }
               <h4 className={`${styles.heading3} text-gray-800 mb-3 group-hover:text-gray-900 transition-colors duration-300`}>
                 {title}
                 {/* Animated underline */}
-                <div className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r ${getGradient()} transition-all duration-500 ${
-                  isHovered ? 'w-full' : 'w-0'
-                }`}></div>
+                <div className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r ${getGradient()} transition-all duration-500 ${isHovered ? 'w-full' : 'w-0'
+                  }`}></div>
               </h4>
             </div>
-            
+
             <p className={`${styles.paragraph} text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-300`}>
               {content}
             </p>
-            
+
             {/* Feature highlights */}
             <div className="flex flex-wrap gap-2 mt-4">
               {index === 0 && (
@@ -152,13 +150,13 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, content, index }
                 </>
               )}
             </div>
-            
+
             {/* Progress indicator */}
             <div className="flex items-center gap-2 mt-4">
               <div className="w-full bg-gray-200 rounded-full h-1 overflow-hidden">
-                <div 
+                <div
                   className={`h-1 bg-gradient-to-r ${getGradient()} rounded-full transition-all duration-1000 ease-out`}
-                  style={{ 
+                  style={{
                     width: isVisible ? '100%' : '0%',
                     transitionDelay: `${index * 0.3 + 0.5}s`
                   }}
@@ -173,7 +171,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, content, index }
   );
 };
 
-const Business = () => {
+const FeaturesSection = () => {
   const [activeFeature, setActiveFeature] = useState(0);
   const sectionRef = useRef(null);
 
@@ -185,9 +183,9 @@ const Business = () => {
   ];
 
   return (
-    <section id='features' className={`${layout.section} rounded-[9rem]  bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20 relative `}
-    style={{boxShadow: '-1px -6px 6px -5px rgba(0, 0, 0, 0.025)'}}>
-      {/* Animated background elements */}
+    <section id='features' className={`${layout.section} rounded-[9rem] bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20 relative `}
+      style={{ boxShadow: '-1px -6px 6px -5px rgba(0, 0, 0, 0.025)' }}>
+      {/* Animated background elements */}  
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-40 h-40 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
         <div className="absolute top-40 right-20 w-32 h-32 bg-gradient-to-br from-cyan-200 to-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
@@ -202,16 +200,16 @@ const Business = () => {
         </div>
 
         <h2 className={`${styles.heading2} text-gray-800 mb-6 relative`}>
-          RRTM ile Sağlık <br className='sm:block hidden'/>
+          RRTM ile Sağlık <br className='sm:block hidden' />
           <span className="text-gradient relative">
             Hizmetlerini
             <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transform scale-x-0 animate-pulse"></div>
           </span> Dönüştürün
         </h2>
-        
+
         <p className={`${styles.paragraphLarge} max-w-[500px] text-gray-600 mb-8 leading-relaxed`}>
-          Remember Regeneration Therapy Method (RRTM) platformu ile hasta tedavi süreçlerinizi 
-          dijitalleştirin, yapay zeka destekli analiz ile kişiselleştirilmiş protokoller oluşturun 
+          Remember Regeneration Therapy Method (RRTM) platformu ile hasta tedavi süreçlerinizi
+          dijitalleştirin, yapay zeka destekli analiz ile kişiselleştirilmiş protokoller oluşturun
           ve tedavi etkinliğini artırın.
         </p>
 
@@ -234,10 +232,10 @@ const Business = () => {
         {/* Enhanced CTA button */}
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-0 group-hover:opacity-75 transition-opacity duration-500"></div>
-          <Button styles='relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl' />
+          <DiscoverButton styles='relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl' />
         </div>
       </div>
-      
+
       <div className={`${layout.sectionImg} flex-col relative z-10`}>
         {/* Section title for features */}
         <div className="text-center mb-8">
@@ -250,9 +248,9 @@ const Business = () => {
         {/* Feature cards with enhanced design */}
         <div className="space-y-6">
           {features.map((feature, index) => (
-            <FeatureCard 
-              key={feature.id} 
-              {...feature} 
+            <FeatureCard
+              key={feature.id}
+              {...feature}
               index={index}
             />
           ))}
@@ -278,4 +276,4 @@ const Business = () => {
   )
 }
 
-export default Business
+export default FeaturesSection

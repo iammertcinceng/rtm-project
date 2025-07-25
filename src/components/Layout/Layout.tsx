@@ -1,32 +1,37 @@
 import Navbar from './Navbar'
 import Footer from './Footer'
 import React from 'react'
+import { useLocation } from 'react-router-dom'
 import styles from '../../style'
 import ScrollAnimation from '../UI/ScrollAnimation'
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const systemPaths = ['/login', '/register']; // Basit footer eklenecek sistem sayfaları
+  const isSystemPage = systemPaths.includes(location.pathname);
   return (
     <div className='bg-gradient-to-br from-slate-50 to-blue-50 w-full overflow-hidden min-h-screen'>
       {/* Navbar */}
       <div className={`${styles.paddingX} ${styles.flexCenter} absolute top-0 left-0 right-0 z-50`}>
         <div className={`${styles.boxWidth}`}>
-          <Navbar/>
+          <Navbar />
         </div>
       </div>
       {/* İçerik */}
-      <main 
-      // className='flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-8'
-      >
+      <main>
         {children}
       </main>
       {/* Footer */}
-      <div className={`bg-white ${styles.paddingX} ${styles.flexStart} mt-24`}>
-        <div className={`${styles.boxWidth}`}>
-          <ScrollAnimation>
-            <Footer/>
-          </ScrollAnimation>
+
+      {!isSystemPage && (
+        <div className={`bg-white ${styles.paddingX} ${styles.flexStart}`}>
+          <div className={`${styles.boxWidth}`}>
+            <ScrollAnimation>
+              <Footer />
+            </ScrollAnimation>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
