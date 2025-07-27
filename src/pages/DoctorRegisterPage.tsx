@@ -5,25 +5,23 @@ import { db } from "../firebase/config";
 import { TURKIYE_CITIES } from "../types/TurkiyeCities";
 import { useAuth } from "../context/AuthContext";
 
-interface Profile {
+interface DoctorProfile {
   fullName: string;
   tcNo: string;
-  fatherName: string;
-  address: string;
+  licenseNumber: string;
+  specialization: string;
   phone: string;
-  registeredProvince: string;
-  registrationDate: string;
-  visitReason: string;
-  birthDate: string;
-  gender: string;
-  birthPlace: string;
+  address: string;
+  hospital: string;
+  department: string;
+  experience: string;
+  education: string;
   email: string;
-  emergencyPhone: string;
 }
 
-export default function ProfilePage() {
+export default function DoctorRegisterPage() {
   const { user, loading, logout } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<DoctorProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -31,59 +29,48 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("🔄 ProfilePage useEffect çalıştı", { loading, user: user?.uid });
+    console.log("🔄 DoctorRegisterPage useEffect çalıştı", { loading, user: user?.uid });
 
     if (!loading && user) {
       const fetchProfile = async () => {
-        console.log("📥 Profil çekme işlemi başladı", { userId: user.uid });
+        console.log("📥 Doktor profili çekme işlemi başladı", { userId: user.uid });
         try {
-          // Check both collections to determine user type
-          const patientRef = doc(db, "patients", user.uid);
-          const doctorRef = doc(db, "doctors", user.uid);
-          
-          const [patientSnap, doctorSnap] = await Promise.all([
-            getDoc(patientRef),
-            getDoc(doctorRef)
-          ]);
-          
-          if (patientSnap.exists()) {
-            console.log("✅ Patient profile found, loading patient profile page");
-            const data = patientSnap.data() as Profile;
+          const ref = doc(db, "doctors", user.uid);
+          console.log("🔍 Firestore referansı oluşturuldu:", ref.path);
+
+          const snap = await getDoc(ref);
+          console.log("📄 Firestore sorgusu tamamlandı", { exists: snap.exists() });
+
+          if (snap.exists()) {
+            const data = snap.data() as DoctorProfile;
             setProfile(data);
-            console.log("✅ Patient profili başarıyla yüklendi:", data);
-          } else if (doctorSnap.exists()) {
-            console.log("✅ Doctor profile found, redirecting to doctor registration page");
-            // Redirect doctor to doctor registration page
-            navigate('/doctor-register');
-            return;
+            console.log("✅ Doktor profili başarıyla yüklendi:", data);
           } else {
-            console.log("⚠️ No profile found, creating new patient profile");
-            const newProfile: Profile = {
+            console.log("⚠️ Doktor profili bulunamadı, yeni profil oluşturuluyor...");
+            const newProfile: DoctorProfile = {
               fullName: '',
               tcNo: '',
-              fatherName: '',
-              address: '',
+              licenseNumber: '',
+              specialization: '',
               phone: '',
-              registeredProvince: '',
-              registrationDate: '',
-              visitReason: '',
-              birthDate: '',
-              gender: '',
-              birthPlace: '',
+              address: '',
+              hospital: '',
+              department: '',
+              experience: '',
+              education: '',
               email: user.email || '',
-              emergencyPhone: '',
             };
 
-            await setDoc(patientRef, newProfile);
+            await setDoc(ref, newProfile);
             setProfile(newProfile);
-            console.log("✅ Yeni patient profili oluşturuldu ve kaydedildi");
+            console.log("✅ Yeni doktor profili oluşturuldu ve kaydedildi");
           }
         } catch (err) {
-          console.error("❌ Profil çekme hatası:", err);
-          setFetchError(`Profil çekilemedi: ${err instanceof Error ? err.message : 'Bilinmeyen hata'}`);
+          console.error("❌ Doktor profili çekme hatası:", err);
+          setFetchError(`Doktor profili çekilemedi: ${err instanceof Error ? err.message : 'Bilinmeyen hata'}`);
         }
         setProfileLoading(false);
-        console.log("🏁 Profil yükleme işlemi tamamlandı");
+        console.log("🏁 Doktor profili yükleme işlemi tamamlandı");
       };
       fetchProfile();
     } else if (!loading && !user) {
@@ -92,7 +79,7 @@ export default function ProfilePage() {
     }
   }, [user, loading, navigate]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     console.log("📝 Input değişikliği:", { name: e.target.name, value: e.target.value });
 
     if (!profile) return;
@@ -101,17 +88,19 @@ export default function ProfilePage() {
     const name = e.target.name;
 
     // Özel formatlamalar
-    if (name === 'fullName' || name === 'fatherName') {
+    if (name === 'fullName') {
       value = value.split(' ').map(word =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ');
-    } else if (name === 'phone' || name === 'emergencyPhone') {
+    } else if (name === 'phone') {
       const cleaned = value.replace(/\D/g, '');
       if (cleaned.length === 11 && cleaned.startsWith('0')) {
         value = cleaned.replace(/(\d{4})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3 $4');
       }
     } else if (name === 'tcNo') {
       value = value.replace(/\D/g, '').slice(0, 11);
+    } else if (name === 'licenseNumber') {
+      value = value.replace(/\D/g, '').slice(0, 10);
     }
 
     setProfile({ ...profile, [name]: value });
@@ -119,8 +108,8 @@ export default function ProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("💾 Kaydetme işlemi başladı");
-    console.log("📊 Mevcut profil verisi:", profile);
+    console.log("💾 Doktor kaydetme işlemi başladı");
+    console.log("📊 Mevcut doktor profili verisi:", profile);
     console.log("👤 Kullanıcı bilgisi:", { uid: user?.uid, email: user?.email });
 
     setSaving(true);
@@ -129,7 +118,7 @@ export default function ProfilePage() {
     try {
       if (user && profile) {
         console.log("🔄 Firestore güncelleme başladı", { userId: user.uid });
-        const ref = doc(db, "patients", user.uid);
+        const ref = doc(db, "doctors", user.uid);
 
         const updateData = {
           ...profile,
@@ -138,9 +127,9 @@ export default function ProfilePage() {
 
         console.log("📤 Gönderilecek veri:", updateData);
         await updateDoc(ref, updateData);
-        console.log("✅ Profil başarıyla güncellendi");
+        console.log("✅ Doktor profili başarıyla güncellendi");
 
-        alert("Profil başarıyla güncellendi!");
+        alert("Doktor profili başarıyla güncellendi!");
         //toast a çevir.
 
         // 1 saniye sonra ana sayfaya yönlendir
@@ -148,8 +137,8 @@ export default function ProfilePage() {
           navigate("/");
         }, 1000);
       } else {
-        console.log("❌ Kullanıcı veya profil verisi eksik", { user: !!user, profile: !!profile });
-        throw new Error("Kullanıcı veya profil verisi eksik");
+        console.log("❌ Kullanıcı veya doktor profili verisi eksik", { user: !!user, profile: !!profile });
+        throw new Error("Kullanıcı veya doktor profili verisi eksik");
       }
     } catch (err) {
       console.error("❌ Kaydetme hatası:", err);
@@ -192,7 +181,7 @@ export default function ProfilePage() {
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
           <div className="text-6xl mb-4">❌</div>
-          <div className="text-lg font-semibold text-red-500">Profil bulunamadı. Otomatik çıkış yapılıyor...</div>
+          <div className="text-lg font-semibold text-red-500">Doktor profili bulunamadı. Otomatik çıkış yapılıyor...</div>
         </div>
       </div>
     );
@@ -226,7 +215,7 @@ export default function ProfilePage() {
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>    {/* daha sonra değiştirilebilir */}
+              </svg>
               Çıkış Yap
             </button>
           </div>
@@ -235,13 +224,13 @@ export default function ProfilePage() {
           <div className="text-center pt-8">
             <div className="relative inline-block mb-8">
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 relative drop-shadow-lg">
-                Hasta <span className="text-gradient bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Profili</span>
+                Doktor <span className="text-gradient bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Kaydı</span>
               </h1>
 
               {/* Welcome Badge - Başlığın tam altında */}
               <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg transform hover:scale-105 transition-all duration-300">
-                <span>👋</span>
-                <span>Hoş Geldiniz</span>
+                <span>👨‍⚕️</span>
+                <span>Doktor Kayıt Formu</span>
               </div>
 
               {/* Decorative elements around title */}
@@ -251,9 +240,9 @@ export default function ProfilePage() {
             </div>
 
             <p className="text-lg text-white/90 font-medium leading-relaxed max-w-xl mx-auto drop-shadow-sm">
-              Kişisel bilgilerinizi güncelleyerek sağlık hizmetlerimizden
+              Doktor bilgilerinizi girerek sisteme kayıt olun ve
               <br className="hidden sm:block" />
-              en iyi şekilde yararlanabilirsiniz.
+              hasta hizmetlerinizi yönetmeye başlayın.
             </p>
           </div>
         </div>
@@ -271,11 +260,11 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-xl">📋</span>
+                  <span className="text-white text-xl">👨‍⚕️</span>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800">Profil Bilgileri</h2>
-                  <p className="text-gray-600 text-sm">Bilgilerinizi güncel tutun</p>
+                  <h2 className="text-2xl font-bold text-gray-800">Doktor Bilgileri</h2>
+                  <p className="text-gray-600 text-sm">Lisans ve uzmanlık bilgilerinizi girin</p>
                 </div>
               </div>
               <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
@@ -322,87 +311,17 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Baba Adı *</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Doktor Lisans No *</label>
                   <input
-                    name="fatherName"
-                    value={profile.fatherName || ''}
+                    name="licenseNumber"
+                    value={profile.licenseNumber || ''}
                     onChange={handleChange}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
                     required
-                    placeholder="Babanızın adı"
+                    maxLength={10}
+                    placeholder="Doktor lisans numaranız"
                   />
                 </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Doğum Tarihi *</label>
-                  <input
-                    name="birthDate"
-                    value={profile.birthDate || ''}
-                    onChange={handleChange}
-                    type="date"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Cinsiyet *</label>
-                  <select
-                    name="gender"
-                    value={profile.gender || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
-                    required
-                  >
-                    <option value="">Seçiniz</option>
-                    <option value="Erkek">Erkek</option>
-                    <option value="Kadın">Kadın</option>
-                    <option value="Diğer">Diğer</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Doğum Yeri *</label>
-                  <select
-                    name="birthPlace"
-                    value={profile.birthPlace || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
-                    required
-                  >
-                    <option value="">Seçiniz</option>
-                    {TURKIYE_CITIES.map(city => (
-                      <option key={city.id} value={city.name}>{city.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Kayıtlı İl (Nüfus) *</label>
-                  <select
-                    name="registeredProvince"
-                    value={profile.registeredProvince || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
-                    required
-                  >
-                    <option value="">Seçiniz</option>
-                    {TURKIYE_CITIES.map(city => (
-                      <option key={city.id} value={city.name}>{city.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* İletişim Bilgileri Bölümü */}
-            <div className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-lg">📞</span>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800">
-                  İletişim Bilgileri
-                </h2>
-              </div>
-              <div className="w-full h-px bg-gradient-to-r from-green-200 via-emerald-200 to-transparent mb-8"></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Telefon *</label>
                   <input
@@ -414,27 +333,103 @@ export default function ProfilePage() {
                     placeholder="05XX XXX XX XX"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Uzmanlık Bilgileri Bölümü */}
+            <div className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">🏥</span>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Uzmanlık Bilgileri
+                </h2>
+              </div>
+              <div className="w-full h-px bg-gradient-to-r from-green-200 via-emerald-200 to-transparent mb-8"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Acil Durum Telefonu *</label>
-                  <input
-                    name="emergencyPhone"
-                    value={profile.emergencyPhone || ''}
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Uzmanlık Alanı *</label>
+                  <select
+                    name="specialization"
+                    value={profile.specialization || ''}
                     onChange={handleChange}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
                     required
-                    placeholder="05XX XXX XX XX"
+                  >
+                    <option value="">Seçiniz</option>
+                    <option value="Kardiyoloji">Kardiyoloji</option>
+                    <option value="Nöroloji">Nöroloji</option>
+                    <option value="Ortopedi">Ortopedi</option>
+                    <option value="Dahiliye">Dahiliye</option>
+                    <option value="Cerrahi">Cerrahi</option>
+                    <option value="Pediatri">Pediatri</option>
+                    <option value="Kadın Hastalıkları">Kadın Hastalıkları</option>
+                    <option value="Göz Hastalıkları">Göz Hastalıkları</option>
+                    <option value="Kulak Burun Boğaz">Kulak Burun Boğaz</option>
+                    <option value="Dermatoloji">Dermatoloji</option>
+                    <option value="Psikiyatri">Psikiyatri</option>
+                    <option value="Üroloji">Üroloji</option>
+                    <option value="Gastroenteroloji">Gastroenteroloji</option>
+                    <option value="Endokrinoloji">Endokrinoloji</option>
+                    <option value="Göğüs Hastalıkları">Göğüs Hastalıkları</option>
+                    <option value="Acil Tıp">Acil Tıp</option>
+                    <option value="Radyoloji">Radyoloji</option>
+                    <option value="Patoloji">Patoloji</option>
+                    <option value="Anestezi">Anestezi</option>
+                    <option value="Diğer">Diğer</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Deneyim (Yıl) *</label>
+                  <select
+                    name="experience"
+                    value={profile.experience || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
+                  >
+                    <option value="">Seçiniz</option>
+                    <option value="0-2">0-2 yıl</option>
+                    <option value="3-5">3-5 yıl</option>
+                    <option value="6-10">6-10 yıl</option>
+                    <option value="11-15">11-15 yıl</option>
+                    <option value="16-20">16-20 yıl</option>
+                    <option value="20+">20+ yıl</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Hastane *</label>
+                  <input
+                    name="hospital"
+                    value={profile.hospital || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
+                    placeholder="Çalıştığınız hastane"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Bölüm *</label>
+                  <input
+                    name="department"
+                    value={profile.department || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
+                    required
+                    placeholder="Çalıştığınız bölüm"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">E-posta *</label>
-                  <input
-                    name="email"
-                    value={profile.email || ''}
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Eğitim Bilgileri *</label>
+                  <textarea
+                    name="education"
+                    value={profile.education || ''}
                     onChange={handleChange}
-                    type="email"
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
                     required
-                    placeholder="ornek@email.com"
+                    rows={3}
+                    placeholder="Tıp fakültesi, uzmanlık, sertifikalar vb."
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -448,60 +443,17 @@ export default function ProfilePage() {
                     placeholder="Tam adresinizi giriniz"
                   />
                 </div>
-              </div>
-            </div>
-
-            {/* Başvuru Bilgileri Bölümü */}
-            <div className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-lg">📋</span>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800">
-                  Başvuru Bilgileri
-                </h2>
-              </div>
-              <div className="w-full h-px bg-gradient-to-r from-orange-200 via-red-200 to-transparent mb-8"></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">Kayıt Tarihi *</label>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 font-semibold mb-2 text-sm font-inter">E-posta *</label>
                   <input
-                    name="registrationDate"
-                    value={profile.registrationDate || ''}
+                    name="email"
+                    value={profile.email || ''}
                     onChange={handleChange}
-                    type="date"
+                    type="email"
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 font-inter hover:shadow-md"
                     required
+                    placeholder="ornek@email.com"
                   />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-gray-700 font-semibold mb-2 text-sm">Başvuru Nedeni *</label>
-                  <div className="flex gap-8 mt-3">
-                    <label className="flex items-center cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="visitReason"
-                        value="muayene"
-                        checked={profile.visitReason === 'muayene'}
-                        onChange={handleChange}
-                        className="mr-3 w-5 h-5 text-cyan-600 focus:ring-cyan-500 focus:ring-2"
-                        required
-                      />
-                      <span className="text-gray-700 font-medium group-hover:text-cyan-600 transition-colors">Muayene</span>
-                    </label>
-                    <label className="flex items-center cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="visitReason"
-                        value="kontrol"
-                        checked={profile.visitReason === 'kontrol'}
-                        onChange={handleChange}
-                        className="mr-3 w-5 h-5 text-cyan-600 focus:ring-cyan-500 focus:ring-2"
-                        required
-                      />
-                      <span className="text-gray-700 font-medium group-hover:text-cyan-600 transition-colors">Kontrol</span>
-                    </label>
-                  </div>
                 </div>
               </div>
             </div>
@@ -537,7 +489,7 @@ export default function ProfilePage() {
                   ) : (
                     <div className="flex items-center justify-center gap-2 relative z-10">
                       <span>💾</span>
-                      Profili Kaydet
+                      Doktor Kaydını Tamamla
                     </div>
                   )}
                 </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import menu from '../../assets/menu.svg'
 import close from '../../assets/close.svg'
+import { rtmLogo } from '../../assets'
 import { navLinks } from '../../constants'
 import styles from '../../style'
 import { useAuth } from '../../context/AuthContext'
@@ -38,14 +39,53 @@ const Navbar = () => {
     const fetchUserProfile = async () => {
       if (user) {
         try {
-          const ref = doc(db, "patients", user.uid);
-          const snap = await getDoc(ref);
-          if (snap.exists()) {
-            setUserProfile(snap.data());
+          console.log("🔍 Navbar: Fetching profile for user:", user.uid);
+          
+          // Check both collections and use the one with more complete data
+          let patientRef = doc(db, "patients", user.uid);
+          let doctorRef = doc(db, "doctors", user.uid);
+          
+          const [patientSnap, doctorSnap] = await Promise.all([
+            getDoc(patientRef),
+            getDoc(doctorRef)
+          ]);
+          
+          let patientData = null;
+          let doctorData = null;
+          
+          if (patientSnap.exists()) {
+            patientData = patientSnap.data();
+            console.log("📋 Navbar: Found patient profile:", patientData);
+          }
+          
+          if (doctorSnap.exists()) {
+            doctorData = doctorSnap.data();
+            console.log("👨‍⚕️ Navbar: Found doctor profile:", doctorData);
+          }
+          
+          // Prefer the profile with more complete data (has fullName)
+          if (doctorData?.fullName && !patientData?.fullName) {
+            console.log("✅ Navbar: Using doctor profile (has fullName)");
+            setUserProfile(doctorData);
+          } else if (patientData?.fullName && !doctorData?.fullName) {
+            console.log("✅ Navbar: Using patient profile (has fullName)");
+            setUserProfile(patientData);
+          } else if (doctorData) {
+            console.log("✅ Navbar: Using doctor profile (default)");
+            setUserProfile(doctorData);
+          } else if (patientData) {
+            console.log("✅ Navbar: Using patient profile (default)");
+            setUserProfile(patientData);
+          } else {
+            console.log("⚠️ Navbar: No profile found for user");
+            setUserProfile(null);
           }
         } catch (error) {
-          console.error("Profil çekme hatası:", error);
+          console.error("❌ Navbar: Profil çekme hatası:", error);
+          setUserProfile(null);
         }
+      } else {
+        setUserProfile(null);
       }
     };
     fetchUserProfile();
@@ -53,17 +93,33 @@ const Navbar = () => {
 
   const getUserDisplay = () => {
     if (!user) return null;
-    if (userProfile?.fullName) return userProfile.fullName;
-    if (userProfile?.email) return userProfile.email.split('@')[0];
+    
+    console.log("🎯 Navbar: getUserDisplay called with profile:", userProfile);
+    
+    if (userProfile?.fullName) {
+      console.log("✅ Navbar: Using fullName:", userProfile.fullName);
+      return userProfile.fullName;
+    }
+    if (userProfile?.email) {
+      console.log("📧 Navbar: Using email:", userProfile.email.split('@')[0]);
+      return userProfile.email.split('@')[0];
+    }
+    console.log("👤 Navbar: Using fallback: Hesabım");
     return 'Hesabım';
   };
 
+  const isDoctor = () => {
+    return userProfile?.userType === 'doctor' || userProfile?.specialization;
+  };
+
   return (
-    <nav className={`w-full flex py-8 justify-between items-center navbar ${styles.boxWidth}`}>
+    <nav className={`w-full flex py-0 justify-between items-center navbar ${styles.boxWidth}`}>
       <div className="flex items-center">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-          <span className="text-white font-bold text-xl">R</span>
-        </div>
+        <img 
+          src={rtmLogo} 
+          alt="RTM Logo" 
+          className="w-50 h-50 mr-4"
+        />
         <div>
           <h2 className="text-xl font-bold text-white">RTM Klinik</h2>
           <p className="text-sm text-white/70">RRTM Platform</p>
@@ -93,10 +149,20 @@ const Navbar = () => {
             Giriş Yap
           </button>
         ) : (
-          <div className="px-5 py-2 rounded-xl font-inter font-semibold text-base bg-white/10 text-white border border-cyan-400/40 shadow flex items-center gap-2 cursor-pointer hover:bg-cyan-500/20 transition-all duration-200" onClick={() => navigate('/profile')}>
-            <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-            Merhaba, {getUserDisplay()}
-          </div>
+          <>
+            {isDoctor() && (
+              <button
+                onClick={() => navigate('/panel')}
+                className="px-5 py-2 rounded-xl font-inter font-semibold text-base bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 cursor-pointer"
+              >
+                Platform
+              </button>
+            )}
+            <div className="px-5 py-2 rounded-xl font-inter font-semibold text-base bg-white/10 text-white border border-cyan-400/40 shadow flex items-center gap-2 cursor-pointer hover:bg-cyan-500/20 transition-all duration-200" onClick={() => navigate('/profile')}>
+              <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+              Merhaba, {getUserDisplay()}
+            </div>
+          </>
         )}
       </div>
 

@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-type LoginFormProps = {
+type DoctorLoginFormProps = {
   onSwitchTab: () => void;
 };
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
+const DoctorLoginForm: React.FC<DoctorLoginFormProps> = ({ onSwitchTab }) => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -20,9 +20,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/profile');
+      // Check if user is a doctor and redirect accordingly
+      // For now, redirect to doctor register page to complete profile
+      navigate('/doctor-register');
     } catch (err: any) {
-      setError('Giriş başarısız: ' + (err?.message || 'Bilinmeyen hata'));
+      setError('Doktor girişi başarısız: ' + (err?.message || 'Bilinmeyen hata'));
     }
     setLoading(false);
   };
@@ -31,12 +33,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
     <div className="space-y-6">
       {/* Welcome Message */}
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-full px-4 py-2 mb-4">
-          <span className="text-lg">👤</span>
-          <span className="text-blue-700 font-semibold text-sm">Hasta Girişi</span>
+        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-full px-4 py-2 mb-4">
+          <span className="text-lg">👨‍⚕️</span>
+          <span className="text-green-700 font-semibold text-sm">Doktor Girişi</span>
         </div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Hoş Geldiniz</h2>
-        <p className="text-gray-600 text-sm">Sağlık hizmetlerinize erişmek için giriş yapın</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Hoş Geldiniz Doktor</h2>
+        <p className="text-gray-600 text-sm">Hasta hizmetlerinizi yönetmek için giriş yapın</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -48,10 +50,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
             </div>
             <input
               type="email"
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 hover:shadow-md"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-400 focus:border-green-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 hover:shadow-md"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="hasta@email.com"
+              placeholder="doktor@hastane.com"
               required
             />
           </div>
@@ -65,7 +67,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
             </div>
             <input
               type="password"
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 hover:shadow-md"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-400 focus:border-green-400 focus:outline-none text-base bg-white/90 backdrop-blur-sm transition-all duration-200 hover:shadow-md"
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -85,7 +87,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
 
         <button
           type="submit"
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold text-base shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group"
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-base shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group"
           disabled={loading}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -97,7 +99,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
           ) : (
             <div className="flex items-center justify-center gap-2 relative z-10">
               <span>🚀</span>
-              Giriş Yap
+              Doktor Girişi Yap
             </div>
           )}
         </button>
@@ -109,13 +111,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
           <label className="flex items-center cursor-pointer group">
             <input
               type="checkbox"
-              className="mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500 focus:ring-2 rounded"
+              className="mr-2 w-4 h-4 text-green-600 focus:ring-green-500 focus:ring-2 rounded"
             />
             <span className="text-gray-600 group-hover:text-gray-800 transition-colors">Beni hatırla</span>
           </label>
           <button
             type="button"
-            className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200"
+            className="text-green-600 hover:text-green-700 font-semibold transition-colors duration-200"
           >
             Şifremi unuttum
           </button>
@@ -135,15 +137,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
             type="button"
             className="flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200"
           >
-            <span className="text-lg">📱</span>
-            <span className="text-sm font-medium">SMS</span>
+            <span className="text-lg">🏥</span>
+            <span className="text-sm font-medium">Hastane</span>
           </button>
           <button
             type="button"
             className="flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200"
           >
-            <span className="text-lg">📞</span>
-            <span className="text-sm font-medium">Arama</span>
+            <span className="text-lg">📱</span>
+            <span className="text-sm font-medium">SMS</span>
           </button>
         </div>
       </div>
@@ -151,4 +153,4 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
   );
 };
 
-export default LoginForm; 
+export default DoctorLoginForm; 

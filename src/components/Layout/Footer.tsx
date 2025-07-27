@@ -1,5 +1,6 @@
 import styles from '../../style'
 import { footerLinks, socialMedia } from '../../constants'
+import { rtmLogo } from '../../assets'
 
 const Footer = () => {
   return (
@@ -7,9 +8,11 @@ const Footer = () => {
       <div className={`${styles.flexStart} md:flex-row flex-col mb-8 w-full`}>
         <div className='flex-1 flex flex-col justify-start mr-10'>
           <div className="flex items-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
-              <span className="text-white text-2xl font-bold">R</span>
-            </div>
+            <img 
+              src={rtmLogo} 
+              alt="RTM Logo" 
+              className="w-28 h-28 mr-6"
+            />
             <div>
               <h2 className="text-2xl font-bold text-gray-800">RTM Klinik</h2>
               <p className="text-gray-500">RRTM Platform</p>

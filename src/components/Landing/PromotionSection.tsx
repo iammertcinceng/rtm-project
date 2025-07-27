@@ -1,5 +1,6 @@
 import React from 'react'
 import styles, { layout } from '../../style'
+import { rtmLogo } from '../../assets';
 
 const Promotion = () => {
   return (
@@ -11,9 +12,11 @@ const Promotion = () => {
             <div className="w-full h-full bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-4 flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">R</span>
-                  </div>
+                  <img 
+                    src={rtmLogo} 
+                    alt="RTM Logo" 
+                    className="w-8 h-8 object-contain"
+                  />
                   <span className="font-semibold text-gray-800">RRTM</span>
                 </div>
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>

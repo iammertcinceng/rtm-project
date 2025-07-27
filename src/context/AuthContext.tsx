@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { auth } from '../firebase/config';
-import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from 'firebase/auth';
 import type { User, UserCredential } from 'firebase/auth';
 import { db } from '../firebase/config';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -12,6 +12,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   login: (email: string, password: string) => Promise<UserCredential>;
   register: (email: string, password: string) => Promise<UserCredential>;
+  registerDoctor: (email: string, password: string) => Promise<UserCredential>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,8 +45,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
+  const checkExistingUser = async (email: string) => {
+    try {
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (methods.length > 0) {
+        throw new Error('Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta adresi kullanın veya giriş yapın.');
+      }
+    } catch (error: any) {
+      if (error.code === 'auth/user-not-found') {
+        // User doesn't exist, which is what we want
+        return;
+      }
+      throw error;
+    }
+  };
+
   const register = async (email: string, password: string) => {
     try {
+      // Check if user already exists
+      await checkExistingUser(email);
+      
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       // Firestore'da patients koleksiyonuna yeni belge ekle
       const patientData = {
@@ -62,6 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         gender: '',
         birthPlace: '',
         emergencyPhone: '',
+        userType: 'patient',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -75,8 +95,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const registerDoctor = async (email: string, password: string) => {
+    try {
+      // Check if user already exists
+      await checkExistingUser(email);
+      
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      // Firestore'da doctors koleksiyonuna yeni belge ekle
+      const doctorData = {
+        email,
+        fullName: '',
+        tcNo: '',
+        licenseNumber: '',
+        specialization: '',
+        phone: '',
+        address: '',
+        hospital: '',
+        department: '',
+        experience: '',
+        education: '',
+        userType: 'doctor',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      await setDoc(doc(db, 'doctors', cred.user.uid), doctorData);
+      console.log('Yeni doktor kaydı oluşturuldu:', cred.user.uid);
+      return cred;
+    } catch (error) {
+      console.error('Doktor kayıt sırasında hata oluştu:', error);
+      throw error;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, logout, login, register }}>
+    <AuthContext.Provider value={{ user, loading, logout, login, register, registerDoctor }}>
       {children}
     </AuthContext.Provider>
   );

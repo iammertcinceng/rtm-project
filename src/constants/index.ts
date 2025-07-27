@@ -38,10 +38,6 @@ import {
       title: "Özellikler",
     },
     {
-      id: "platform",
-      title: "Platform",
-    },
-    {
       id: "testimonials",
       title: "Referanslar",
     },

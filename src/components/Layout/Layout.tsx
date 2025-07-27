@@ -7,16 +7,20 @@ import ScrollAnimation from '../UI/ScrollAnimation'
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const systemPaths = ['/login', '/register']; // Basit footer eklenecek sistem sayfaları
+  const systemPaths = ['/login', '/register', '/doctor-register', '/panel']; // Basit footer eklenecek sistem sayfaları
   const isSystemPage = systemPaths.includes(location.pathname);
+  const isPanelPage = location.pathname === '/panel';
+  
   return (
     <div className='bg-gradient-to-br from-slate-50 to-blue-50 w-full overflow-hidden min-h-screen'>
-      {/* Navbar */}
-      <div className={`${styles.paddingX} ${styles.flexCenter} absolute top-0 left-0 right-0 z-50`}>
-        <div className={`${styles.boxWidth}`}>
-          <Navbar />
+      {/* Navbar - Hidden for panel pages */}
+      {!isPanelPage && (
+        <div className={`${styles.paddingX} ${styles.flexCenter} absolute -top-8 left-0 right-0 z-50`}>
+          <div className={`${styles.boxWidth}`}>
+            <Navbar />
+          </div>
         </div>
-      </div>
+      )}
       {/* İçerik */}
       <main>
         {children}

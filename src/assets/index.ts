@@ -24,6 +24,7 @@ import send from './Send.svg';
 import shield from './Shield.svg';
 import star from './Star.svg';
 import taxXmindLogo from './taxXmind_logo.png';
+import rtmLogo from './rtm_logo.png';
 import twitter from './twitter.svg';
 
 export {
@@ -49,6 +50,7 @@ export {
   quotes,
   robot,
   robot2,
+  rtmLogo,
   send,
   shield,
   star,

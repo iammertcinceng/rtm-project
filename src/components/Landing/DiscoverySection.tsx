@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react'
 import styles, { layout } from '../../style'
 import Button from '../UI/DiscoverButton';
+import { rtmLogo } from '../../assets';
 
 type Step = {
   icon: string;
@@ -141,9 +142,11 @@ const DiscoverySection: React.FC = () => {
               {/* Dashboard header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">R</span>
-                  </div>
+                  <img 
+                    src={rtmLogo} 
+                    alt="RTM Logo" 
+                    className="w-16 h-16 object-contain"
+                  />
                   <div>
                     <h3 className="font-bold text-gray-800">RRTM Dashboard</h3>
                     <p className="text-xs text-gray-500">Hasta: Ahmet Y.</p>
