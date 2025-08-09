@@ -18,7 +18,7 @@ const Navbar = () => {
   const handleNavClick = (sectionId: string) => {
     // Eğer ana sayfada değilsek, önce ana sayfaya git
     if (window.location.pathname !== '/') {
-      navigate('/');
+      navigate('/home');
       // Ana sayfa yüklendikten sonra scroll yap
       setTimeout(() => {
         const element = document.getElementById(sectionId);
@@ -158,7 +158,7 @@ const Navbar = () => {
                 Platform
               </button>
             )}
-            <div className="px-5 py-2 rounded-xl font-inter font-semibold text-base bg-white/10 text-white border border-cyan-400/40 shadow flex items-center gap-2 cursor-pointer hover:bg-cyan-500/20 transition-all duration-200" onClick={() => navigate('/profile')}>
+            <div className="px-5 py-2 rounded-xl font-inter font-semibold text-base bg-white/10 text-white border border-cyan-400/40 shadow flex items-center gap-2 cursor-pointer hover:bg-cyan-500/20 transition-all duration-200" onClick={() => navigate(isDoctor() ? '/doctor-register' : '/profile')}>
               <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
               Merhaba, {getUserDisplay()}
             </div>

@@ -20,7 +20,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchTab }) => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/profile');
+      navigate('/home');
     } catch (err: any) {
       setError('Giriş başarısız: ' + (err?.message || 'Bilinmeyen hata'));
     }

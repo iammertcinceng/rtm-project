@@ -18,9 +18,8 @@ const AuthTabs: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      // Check if user is a doctor or patient and redirect accordingly
-      // For now, redirect to profile page
-      navigate('/profile');
+      // Redirect to home page after login
+      navigate('/home');
     }
   }, [user, navigate]);
 

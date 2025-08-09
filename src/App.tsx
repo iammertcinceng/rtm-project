@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
+import HipokratLandingPage from './pages/HipokratLandingPage';
 import Home from './pages/Landingpage';
 import AuthTabs from './pages/auth/AuthTabs';
 import ProfilePage from './pages/ProfilePage';
@@ -11,15 +12,34 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<AuthTabs />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/doctor-register" element={<DoctorRegisterPage />} />
-            <Route path="/panel" element={<AdminPanel />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          <Route path="/" element={<HipokratLandingPage />} />
+          <Route path="/home" element={
+            <Layout>
+              <Home />
+            </Layout>
+          } />
+          <Route path="/login" element={
+            <Layout>
+              <AuthTabs />
+            </Layout>
+          } />
+          <Route path="/profile" element={
+            <Layout>
+              <ProfilePage />
+            </Layout>
+          } />
+          <Route path="/doctor-register" element={
+            <Layout>
+              <DoctorRegisterPage />
+            </Layout>
+          } />
+          <Route path="/panel" element={
+            <Layout>
+              <AdminPanel />
+            </Layout>
+          } />
+        </Routes>
       </BrowserRouter>
     </AuthProvider>
   );

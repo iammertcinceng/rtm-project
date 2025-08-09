@@ -14,8 +14,19 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, doct
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/');
+    try {
+      console.log("🚪 Sidebar logout başladı");
+      console.log("👤 Mevcut doktor kullanıcı:", doctorProfile?.email);
+      
+      await logout();
+      console.log("✅ Doktor logout başarılı, ana sayfaya yönlendiriliyor");
+      
+      navigate('/');
+    } catch (error) {
+      console.error("❌ Doktor logout hatası:", error);
+      // Even if logout fails, try to navigate to home
+      navigate('/');
+    }
   };
 
   const menuItems = [
@@ -128,8 +139,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, doct
       {/* Logout Button */}
       <div className="p-4 border-t border-white/20">
         <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-xl text-red-300 hover:text-red-200 transition-all duration-200"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("🔴 Sidebar çıkış butonu tıklandı!");
+            handleLogout();
+          }}
+          className="w-full flex items-center gap-3 px-4 py-3 bg-red-900 hover:bg-red-950 border border-red-800 rounded-xl text-white hover:text-red-100 transition-all duration-200 active:scale-95 shadow-lg hover:shadow-xl"
+          style={{ pointerEvents: 'auto' }}
         >
           <span className="text-lg">🚪</span>
           <span className="font-semibold">Çıkış Yap</span>

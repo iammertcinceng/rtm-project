@@ -136,7 +136,7 @@ export default function AdminPanel() {
                   <span className="text-white/80 text-sm">Çevrimiçi</span>
                 </div>
                 <button
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate('/home')}
                   className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white hover:bg-white/20 transition-all duration-200"
                 >
                   Ana Sayfa

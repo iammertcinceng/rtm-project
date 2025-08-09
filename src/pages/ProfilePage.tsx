@@ -52,9 +52,9 @@ export default function ProfilePage() {
             setProfile(data);
             console.log("✅ Patient profili başarıyla yüklendi:", data);
           } else if (doctorSnap.exists()) {
-            console.log("✅ Doctor profile found, redirecting to doctor registration page");
-            // Redirect doctor to doctor registration page
-            navigate('/doctor-register');
+            console.log("✅ Doctor profile found, staying on home page");
+            // Doctor should stay on home page, not redirect
+            setProfileLoading(false);
             return;
           } else {
             console.log("⚠️ No profile found, creating new patient profile");
@@ -160,9 +160,19 @@ export default function ProfilePage() {
   };
 
   const handleLogout = async () => {
-    console.log("🚪 Çıkış işlemi başladı");
-    await logout();
-    navigate("/");
+    try {
+      console.log("🚪 ProfilePage logout başladı");
+      console.log("👤 Mevcut hasta kullanıcı:", user?.email);
+      
+      await logout();
+      console.log("✅ Hasta logout başarılı, ana sayfaya yönlendiriliyor");
+      
+      navigate("/");
+    } catch (error) {
+      console.error("❌ Hasta logout hatası:", error);
+      // Even if logout fails, try to navigate to home
+      navigate("/");
+    }
   };
 
   if (loading || profileLoading) {
@@ -218,15 +228,21 @@ export default function ProfilePage() {
         {/* Enhanced Header */}
         <div className="relative mb-12">
           {/* Çıkış butonu - Sağ üst köşe */}
-          <div className="absolute top-0 right-0 z-20">
+          <div className="absolute top-0 right-0 z-50">
             <button
               type="button"
-              onClick={handleLogout}
-              className="inline-flex cursor-pointer items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm bg-red-400/50 backdrop-blur-sm border border-red-500/20 text-white shadow-lg hover:bg-red-500/50 hover:border-red-400/50 hover:text-red-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("🔴 Hasta çıkış butonu tıklandı!");
+                handleLogout();
+              }}
+              className="inline-flex cursor-pointer items-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm bg-red-700 hover:bg-red-800 border border-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-600 active:scale-95"
+              style={{ pointerEvents: 'auto' }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>    {/* daha sonra değiştirilebilir */}
+              </svg>
               Çıkış Yap
             </button>
           </div>

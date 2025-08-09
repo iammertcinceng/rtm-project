@@ -20,9 +20,7 @@ const DoctorLoginForm: React.FC<DoctorLoginFormProps> = ({ onSwitchTab }) => {
     setLoading(true);
     try {
       await login(email, password);
-      // Check if user is a doctor and redirect accordingly
-      // For now, redirect to doctor register page to complete profile
-      navigate('/doctor-register');
+      navigate('/home');
     } catch (err: any) {
       setError('Doktor girişi başarısız: ' + (err?.message || 'Bilinmeyen hata'));
     }

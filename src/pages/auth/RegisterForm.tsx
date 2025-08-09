@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ConsentFormModal from '../../components/UI/ConsentFormModal';
 
 type RegisterFormProps = {
   onSwitchTab: () => void;
@@ -14,6 +15,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchTab }) => {
   const [password2, setPassword2] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,14 +25,30 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchTab }) => {
       setError('Şifreler eşleşmiyor!');
       return;
     }
+    if (!consentAccepted) {
+      setError('Onam formunu kabul etmelisiniz!');
+      return;
+    }
     setLoading(true);
     try {
       await register(email, password);
-      navigate('/profile');
+      navigate('/home');
     } catch (err: any) {
       setError('Kayıt başarısız: ' + (err?.message || 'Bilinmeyen hata'));
     }
     setLoading(false);
+  };
+
+  const handleConsentCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setShowConsentModal(true);
+    } else {
+      setConsentAccepted(false);
+    }
+  };
+
+  const handleConsentAccept = () => {
+    setConsentAccepted(true);
   };
 
   return (
@@ -128,21 +147,32 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchTab }) => {
 
       {/* Terms and Conditions */}
       <div className="space-y-4">
-        <div className="flex items-start gap-3 text-sm">
-          <input
-            type="checkbox"
-            className="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500 focus:ring-2 rounded"
-            required
-          />
+        <div className="flex items-center gap-3 text-sm">
+          <div className="relative flex items-center">
+            <input
+              type="checkbox"
+              checked={consentAccepted}
+              onChange={handleConsentCheckboxChange}
+              className="w-5 h-5 appearance-none focus:ring-cyan-500 focus:ring-2 rounded-lg border-2 border-gray-300 checked:border-cyan-600 checked:bg-cyan-600 transition-all duration-200 cursor-pointer"
+              style={{
+                accentColor: '#0891b2', // cyan-600
+                backgroundColor: consentAccepted ? '#0891b2' : 'transparent',
+                borderColor: consentAccepted ? '#0891b2' : '#d1d5db'
+              }}
+              required
+            />
+            {consentAccepted && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ transform: 'translateY(-1px)' }}>
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </div>
           <div className="text-gray-600">
-            <span>Kullanım şartlarını ve </span>
-            <button
-              type="button"
-              className="text-blue-600 hover:text-blue-700 font-semibold underline"
-            >
-              gizlilik politikasını
-            </button>
-            <span> kabul ediyorum</span>
+            <span className={consentAccepted ? "text-green-600 font-medium" : ""}>
+              {consentAccepted ? "Onam formunu okudum ve kabul ediyorum" : "Onam formunu okudum ve kabul ediyorum"}
+            </span>
           </div>
         </div>
 
@@ -172,6 +202,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchTab }) => {
           </button>
         </div>
       </div>
+
+      {/* Consent Form Modal */}
+      <ConsentFormModal
+        isOpen={showConsentModal}
+        onClose={() => setShowConsentModal(false)}
+        onAccept={handleConsentAccept}
+      />
     </div>
   );
 };
