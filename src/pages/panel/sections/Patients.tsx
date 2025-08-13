@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import AddPatientModal from './AddPatientModal';
-import EditPatientModal from './EditPatientModal';
+import EditPatientModal from '../components/EditPatientModal';
 import PatientDetailsModal from './PatientDetailsModal';
 
 interface Patient {

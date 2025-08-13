@@ -1,65 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+import AppointmentModal from '../components/AppointmentModal';
+import AppointmentTypeManager from '../components/AppointmentTypeManager';
 
 const Appointments: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [openAddModal, setOpenAddModal] = useState(false);
+  const [openTypeModal, setOpenTypeModal] = useState(false);
+  const [editedAppointment, setEditedAppointment] = useState<any | null>(null);
 
-  const appointments = [
-    {
-      id: 1,
-      patientName: 'Ahmet Yılmaz',
-      time: '09:00',
-      duration: 30,
-      type: 'Kontrol',
-      status: 'confirmed',
-      notes: 'Rutin kontrol'
-    },
-    {
-      id: 2,
-      patientName: 'Fatma Demir',
-      time: '10:30',
-      duration: 45,
-      type: 'İlk Muayene',
-      status: 'confirmed',
-      notes: 'Yeni hasta'
-    },
-    {
-      id: 3,
-      patientName: 'Mehmet Kaya',
-      time: '12:00',
-      duration: 30,
-      type: 'Kontrol',
-      status: 'pending',
-      notes: 'Laboratuvar sonuçları'
-    },
-    {
-      id: 4,
-      patientName: 'Ayşe Özkan',
-      time: '14:30',
-      duration: 60,
-      type: 'Laboratuvar',
-      status: 'confirmed',
-      notes: 'Kan testi'
-    },
-    {
-      id: 5,
-      patientName: 'Ali Veli',
-      time: '16:00',
-      duration: 30,
-      type: 'Kontrol',
-      status: 'cancelled',
-      notes: 'İptal edildi'
-    }
-  ];
+  // Utils for time math
+  const timeToMinutes = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  };
+  const minutesToTime = (mins: number) => {
+    const h = String(Math.floor(mins / 60)).padStart(2, '0');
+    const m = String(mins % 60).padStart(2, '0');
+    return `${h}:${m}`;
+  };
 
-  const timeSlots = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00', '17:30'
-  ];
+  const WORK_START = '08:00';
+  const WORK_END = '17:30';
+  const hourSlots = useMemo(() => {
+    const start = timeToMinutes(WORK_START);
+    const end = timeToMinutes(WORK_END);
+    const arr: number[] = [];
+    for (let t = start; t <= end; t += 60) arr.push(t);
+    return arr;
+  }, []);
 
-  const getAppointmentForTime = (time: string) => {
-    return appointments.find(app => app.time === time);
+  // Breakpoint'ler: tüm tam saatler + tüm randevu başlangıç/bitiş dakikaları
+  const breakpoints = useMemo(() => {
+    const set = new Set<number>();
+    hourSlots.forEach(t => set.add(t));
+    appointments.forEach(a => {
+      const dur: number = (a.durationMinutes ?? a.duration ?? 0);
+      const s = timeToMinutes(a.start ?? a.time);
+      const e = s + dur;
+      // Mesai sınırlarına göre kırp
+      const start = Math.max(s, timeToMinutes(WORK_START));
+      const end = Math.min(e, timeToMinutes(WORK_END));
+      if (start < end) {
+        set.add(start);
+        set.add(end);
+      }
+    });
+    const list = Array.from(set.values()).sort((a,b)=>a-b);
+    // Mesai bitişi tam olarak ekli olsun
+    if (!list.includes(timeToMinutes(WORK_END))) list.push(timeToMinutes(WORK_END));
+    return list;
+  }, [appointments]);
+
+  // 5 dk grid kaldırıldı; saatlik satırlar üzerinden oransal bloklar gösterilecek
+
+  const dateISO = useMemo(() => selectedDate.toISOString().slice(0, 10), [selectedDate]);
+
+  // Fetch appointments for selected day
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      const qDay = query(
+        collection(db, 'appointments'),
+        where('dateISO', '==', dateISO)
+      );
+      const snap = await getDocs(qDay);
+      const list = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+      list.sort((a,b) => String(a.start||'').localeCompare(String(b.start||'')));
+      setAppointments(list);
+    };
+    fetchAppointments();
+  }, [dateISO]);
+
+  // Segment aralığına düşen randevular
+  const getAppointmentsForSegment = (segStart: number, segEnd: number) => {
+    return appointments
+      .map(a => {
+        const dur: number = (a.durationMinutes ?? a.duration ?? 0);
+        const s = timeToMinutes(a.start ?? a.time);
+        const e = s + dur;
+        return { a, s, e, dur };
+      })
+      .filter(({ s, e }) => s < segEnd && e > segStart) // overlap
+      .sort((x, y) => x.s - y.s);
   };
 
   const getStatusColor = (status: string) => {
@@ -79,9 +104,20 @@ const Appointments: React.FC = () => {
           <h1 className="text-3xl font-bold text-white">Randevu Yönetimi</h1>
           <p className="text-white/70">Randevu takvimi ve planlama</p>
         </div>
-        <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:scale-105 transition-all duration-200 shadow-lg">
-          + Yeni Randevu
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setOpenTypeModal(true)}
+            className="px-4 py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all duration-200 border border-white/20"
+          >
+            Randevu Tipi Ekle
+          </button>
+          <button
+            onClick={() => setOpenAddModal(true)}
+            className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:scale-105 transition-all duration-200 shadow-lg"
+          >
+            + Yeni Randevu
+          </button>
+        </div>
       </div>
 
       {/* Calendar Controls */}
@@ -121,7 +157,7 @@ const Appointments: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-all duration-200">
+            <button onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() - 1))} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-all duration-200">
               ←
             </button>
             <div className="text-white font-semibold">
@@ -132,7 +168,7 @@ const Appointments: React.FC = () => {
                 day: 'numeric' 
               })}
             </div>
-            <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-all duration-200">
+            <button onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + 1))} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-all duration-200">
               →
             </button>
           </div>
@@ -141,10 +177,10 @@ const Appointments: React.FC = () => {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { title: 'Bugünkü Randevular', value: '8', icon: '📅', color: 'from-blue-500 to-cyan-500' },
-            { title: 'Onaylanan', value: '6', icon: '✅', color: 'from-green-500 to-emerald-500' },
-            { title: 'Beklemede', value: '1', icon: '⏳', color: 'from-yellow-500 to-orange-500' },
-            { title: 'İptal', value: '1', icon: '❌', color: 'from-red-500 to-pink-500' }
+            { title: 'Bugünkü Randevular', value: String(appointments.length), icon: '📅', color: 'from-blue-500 to-cyan-500' },
+            { title: 'Onaylanan', value: String(appointments.filter(a=>a.status==='confirmed').length), icon: '✅', color: 'from-green-500 to-emerald-500' },
+            { title: 'Beklemede', value: String(appointments.filter(a=>a.status==='pending').length), icon: '⏳', color: 'from-yellow-500 to-orange-500' },
+            { title: 'İptal', value: String(appointments.filter(a=>a.status==='cancelled').length), icon: '❌', color: 'from-red-500 to-pink-500' }
           ].map((stat, index) => (
             <div key={index} className="bg-white/5 rounded-xl p-4">
               <div className="flex items-center gap-3">
@@ -168,45 +204,57 @@ const Appointments: React.FC = () => {
           <h2 className="text-xl font-bold text-white mb-6">Günlük Program</h2>
           
           <div className="space-y-3">
-            {timeSlots.map((time) => {
-              const appointment = getAppointmentForTime(time);
+            {breakpoints.slice(0, -1).map((bp, idx) => {
+              const next = breakpoints[idx + 1];
+              const list = getAppointmentsForSegment(bp, next);
+              const hasAny = list.length > 0;
+              const rowHeight = Math.max(56, list.length * 56);
               return (
-                <div key={time} className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-200">
+                <div key={`${bp}-${next}`} className="flex items-stretch gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-200">
                   <div className="w-20 text-center">
-                    <div className="text-white font-semibold">{time}</div>
-                    <div className="text-white/60 text-xs">Saat</div>
+                    <div className="text-white font-semibold">{minutesToTime(bp)}</div>
+                    <div className="text-white/60 text-xs">{minutesToTime(next)}</div>
                   </div>
-                  
-                  {appointment ? (
-                    <div className="flex-1 bg-white/10 rounded-xl p-4 border border-white/20">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-white font-semibold">{appointment.patientName}</div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${getStatusColor(appointment.status)}`}>
-                          {appointment.status === 'confirmed' ? 'Onaylandı' :
-                           appointment.status === 'pending' ? 'Beklemede' : 'İptal'}
-                        </span>
-                      </div>
-                      <div className="text-white/70 text-sm mb-1">{appointment.type} • {appointment.duration} dk</div>
-                      <div className="text-white/60 text-xs">{appointment.notes}</div>
-                    </div>
-                  ) : (
-                    <div className="flex-1 text-center py-4">
-                      <div className="text-white/40 text-sm">Boş</div>
-                    </div>
-                  )}
-                  
-                  <div className="flex flex-col gap-2">
-                    {appointment ? (
+                  <div className={`flex-1 relative border border-white/10 rounded-lg ${hasAny ? 'bg-transparent h-full' : 'bg-white/5'}`} style={{ minHeight: rowHeight }}>
+                    {!hasAny && (
+                      <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">Boş</div>
+                    )}
+                    {list.map(({ a, dur }, idx2) => {
+                      // Segment yapısında blok segmenti tamamen doldurur
+                      const endLabel = minutesToTime((a.start ? timeToMinutes(a.start) : timeToMinutes(a.time)) + dur);
+                      return (
+                        <div key={`${a.id}-${idx2}`}
+                          className="absolute inset-x-0 border border-white/20 bg-green-500/20 rounded-md p-3 overflow-hidden"
+                          style={{ top: idx2 * 56 }}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-white text-sm font-semibold truncate pr-2">{a.patientName}</div>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getStatusColor(a.status)}`}>
+                              {a.status === 'confirmed' ? 'Onaylandı' : a.status === 'pending' ? 'Beklemede' : 'İptal'}
+                            </span>
+                          </div>
+                          <div className="text-white/80 text-xs truncate">{a.typeName ?? a.type} • {dur} dk</div>
+                          <div className="text-white/60 text-[11px]">{a.start ?? a.time} - {endLabel}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-col items-center justify-center gap-2 w-12">
+                    {hasAny ? (
                       <>
-                        <button className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-blue-300 hover:text-blue-200 transition-all duration-200">
-                          👁️
-                        </button>
-                        <button className="p-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-lg text-green-300 hover:text-green-200 transition-all duration-200">
-                          ✏️
-                        </button>
+                        <button title="İncele" className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-blue-300 hover:text-blue-200 transition-colors duration-150 cursor-pointer">👁️</button>
+                        <button
+                          title="Düzenle"
+                          onClick={() => { setEditedAppointment(list[0].a); setOpenAddModal(true); }}
+                          className="p-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-lg text-green-300 hover:text-green-200 transition-colors duration-150 cursor-pointer"
+                        >✏️</button>
                       </>
                     ) : (
-                      <button className="p-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-lg text-green-300 hover:text-green-200 transition-all duration-200">
+                      <button
+                        aria-label="Yeni randevu ekle"
+                        onClick={() => { setEditedAppointment(null); setOpenAddModal(true); }}
+                        className="p-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-lg text-green-300 hover:text-green-200 transition-colors duration-150 cursor-pointer leading-none"
+                      >
                         +
                       </button>
                     )}
@@ -231,15 +279,40 @@ const Appointments: React.FC = () => {
                      appointment.status === 'pending' ? 'Beklemede' : 'İptal'}
                   </span>
                 </div>
-                <div className="text-white/70 text-sm mb-1">{appointment.time} • {appointment.type}</div>
-                <div className="text-white/60 text-xs">{appointment.notes}</div>
+                <div className="text-white/70 text-sm mb-1">{appointment.start} • {appointment.typeName ?? appointment.type}</div>
+                <div className="text-white/60 text-xs">{appointment.notes ?? ''}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <AppointmentModal
+        isOpen={openAddModal}
+        onClose={() => { setOpenAddModal(false); setEditedAppointment(null); }}
+        onAdded={() => {
+          // refresh after add
+          (async () => {
+            const qDay = query(
+              collection(db, 'appointments'),
+              where('dateISO', '==', dateISO)
+            );
+            const snap = await getDocs(qDay);
+            const list = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+            list.sort((a,b) => String(a.start||'').localeCompare(String(b.start||'')));
+            setAppointments(list);
+          })();
+        }}
+        editedAppointment={editedAppointment}
+      />
+      <AppointmentTypeManager
+        isOpen={openTypeModal}
+        onClose={() => setOpenTypeModal(false)}
+        onAdded={() => { /* types modal eklemeden sonra, seçim listesi AppointmentModal içinde dinamik gelecek */ }}
+      />
     </div>
   );
 };
 
-export default Appointments; 
+export default Appointments;
