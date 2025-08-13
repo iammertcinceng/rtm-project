@@ -57,18 +57,18 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, doct
   ];
 
   return (
-    <div className="w-80 bg-white/10 backdrop-blur-xl border-r border-white/20 flex flex-col">
+    <div className="w-80 bg-white/10 backdrop-blur-xl border-r border-white/20 flex flex-col h-screen">
       {/* Logo and Brand */}
-      <div className="p-6 border-b border-white/20">
-        <div className="flex items-center gap-3">
+      <div className="px-6 border-b border-white/20">
+        <div className="flex items-center gap-4">
           <img 
             src={rtmLogo} 
             alt="RTM Logo" 
-            className="w-24 h-24"
+            className="w-20 h-20 object-contain"
           />
           <div>
-            <h2 className="text-xl font-bold text-white">RTM Panel</h2>
-            <p className="text-white/70 text-sm">Doktor Yönetim Sistemi</p>
+            <h2 className="text-lg font-bold text-white">RTM Panel</h2>
+            <p className="text-white/70 text-xs">Doktor Yönetim Sistemi</p>
           </div>
         </div>
       </div>
@@ -116,19 +116,19 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, doct
       </nav>
 
       {/* Quick Stats */}
-      <div className="p-4 border-t border-white/20">
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4">
-          <h4 className="text-white/80 text-sm font-semibold mb-3">Hızlı İstatistikler</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
+      <div className="p-3 border-t border-white/20">
+        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3">
+          <h4 className="text-white/80 text-xs font-semibold mb-2">Hızlı İstatistikler</h4>
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
               <span className="text-white/70">Bugünkü Randevular</span>
               <span className="text-green-400 font-semibold">8</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-xs">
               <span className="text-white/70">Bekleyen Hastalar</span>
               <span className="text-yellow-400 font-semibold">3</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-xs">
               <span className="text-white/70">Toplam Hasta</span>
               <span className="text-blue-400 font-semibold">156</span>
             </div>
@@ -137,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, doct
       </div>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-white/20">
+      <div className="p-3 border-t border-white/20">
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -145,7 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, doct
             console.log("🔴 Sidebar çıkış butonu tıklandı!");
             handleLogout();
           }}
-          className="w-full flex items-center gap-3 px-4 py-3 bg-red-900 hover:bg-red-950 border border-red-800 rounded-xl text-white hover:text-red-100 transition-all duration-200 active:scale-95 shadow-lg hover:shadow-xl"
+          className="w-full flex items-center gap-2 px-4 py-2 bg-red-900 hover:bg-red-950 border border-red-800 rounded-xl text-white hover:text-red-100 transition-all duration-200 active:scale-95 shadow-lg hover:shadow-xl"
           style={{ pointerEvents: 'auto' }}
         >
           <span className="text-lg">🚪</span>
@@ -156,4 +156,4 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, doct
   );
 };
 
-export default Sidebar; 
+export default Sidebar;
