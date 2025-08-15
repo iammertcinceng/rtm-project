@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { collection, addDoc, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
+import { toast } from 'react-toastify';
 import { db } from '../../../firebase/config';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -44,6 +45,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ isOpen, onClose, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [dayAppointments, setDayAppointments] = useState<any[]>([]);
+  const [notes, setNotes] = useState<string>('');
 
   // Refs for click-outside handling
   const patientRef = useRef<HTMLDivElement | null>(null);
@@ -86,8 +88,10 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ isOpen, onClose, on
       setPatients(patientsList);
       const tq = query(collection(db, 'appointment_types'));
       const ts = await getDocs(tq);
-      const typeList: TypeDoc[] = ts.docs.map(d => ({ id: d.id, name: (d.data() as any).name, durationMinutes: (d.data() as any).durationMinutes || 30 }));
-      setTypes(typeList);
+      const allTypes: TypeDoc[] = ts.docs.map(d => ({ id: d.id, name: (d.data() as any).name, durationMinutes: (d.data() as any).durationMinutes || 30, status: (d.data() as any).status }));
+      // Filter to show only active appointment types (and legacy types without status)
+      const activeTypes = allTypes.filter(type => (type as any).status === 'active' || !(type as any).status);
+      setTypes(activeTypes);
       setError('');
     })();
   }, [isOpen]);
@@ -108,10 +112,12 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ isOpen, onClose, on
       }
       if (editedAppointment.patientId) setSelectedPatient(editedAppointment.patientId);
       if (editedAppointment.typeId) setSelectedType(editedAppointment.typeId);
+      if (editedAppointment.notes) setNotes(editedAppointment.notes);
     } else {
       // add moduna dönüşte temizleme
       setSelectedPatient('');
       setSelectedType('');
+      setNotes('');
     }
   }, [isOpen, editedAppointment]);
 
@@ -189,6 +195,46 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ isOpen, onClose, on
     return minutesToTime(bound);
   }, [selectedDate]);
 
+  // Calculate all time slots with availability status
+  const allTimeSlots = useMemo(() => {
+    const slots = [];
+    const startMinutes = timeToMinutes(WORK_START);
+    const endMinutes = timeToMinutes(WORK_END);
+    const slotDuration = 30; // 30 dakikalık slotlar
+    
+    for (let time = startMinutes; time < endMinutes; time += slotDuration) {
+      const timeStr = minutesToTime(time);
+      const slotEnd = time + slotDuration;
+      
+      // Check if this slot conflicts with existing appointments
+      const hasConflict = dayAppointments.some(appointment => {
+        const apptStart = timeToMinutes(appointment.start ?? appointment.time);
+        const apptDuration = appointment.durationMinutes ?? appointment.duration ?? 30;
+        const apptEnd = apptStart + apptDuration;
+        
+        // Check if slot overlaps with appointment
+        return (time < apptEnd && slotEnd > apptStart);
+      });
+      
+      // Check if slot is in the past for today
+      const isPast = minSelectableTimeToday && timeToMinutes(timeStr) < timeToMinutes(minSelectableTimeToday);
+      
+      slots.push({
+        time: timeStr,
+        available: !hasConflict && !isPast,
+        isPast: isPast,
+        hasConflict: hasConflict
+      });
+    }
+    
+    return slots;
+  }, [dayAppointments, minSelectableTimeToday]);
+
+  // Keep backwards compatibility for availableSlots
+  const availableSlots = useMemo(() => {
+    return allTimeSlots.filter(slot => slot.available).map(slot => slot.time);
+  }, [allTimeSlots]);
+
   useEffect(() => {
     // Eğer bugün ise, startTime en az minSelectableTimeToday olsun
     if (!minSelectableTimeToday) return;
@@ -229,8 +275,10 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ isOpen, onClose, on
     const dur = selectedTypeObj?.durationMinutes || 0;
     const end = start + dur;
     for (const d of snap.docs) {
-      const s = timeToMinutes((d.data() as any).start);
-      const e = timeToMinutes((d.data() as any).end);
+      const data = d.data() as any;
+      const s = timeToMinutes(data.start ?? data.time);
+      const apptDuration = data.durationMinutes ?? data.duration ?? 30;
+      const e = s + apptDuration;
       const overlap = Math.max(start, s) < Math.min(end, e);
       if (overlap) return true;
     }
@@ -249,6 +297,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ isOpen, onClose, on
       const overlap = await checkOverlap();
       if (overlap) {
         setError('Seçilen zaman aralığı dolu. Lütfen başka bir saat seçin.');
+        toast.error('Seçilen zaman aralığı dolu. Lütfen başka bir saat seçin.');
         setLoading(false);
         return;
       }
@@ -265,6 +314,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ isOpen, onClose, on
             start: startTime,
             status: editedAppointment.status || 'confirmed',
             doctorId: doctorId || editedAppointment.doctorId || null,
+            notes: notes || '',
           });
         } else {
           await addDoc(collection(db, 'appointments'), {
@@ -277,12 +327,15 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ isOpen, onClose, on
             start: startTime,
             status: 'confirmed',
             doctorId: doctorId || null,
+            notes: notes || '',
           });
         }
+        toast.success(editedAppointment ? 'Randevu başarıyla güncellendi!' : 'Randevu başarıyla eklendi!');
         onAdded();
         onClose();
       } catch (err: any) {
         setError('Kayıt sırasında hata oluştu.');
+        toast.error('Randevu kaydedilirken bir hata oluştu!');
       } finally {
         setLoading(false);
       }
@@ -302,125 +355,300 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ isOpen, onClose, on
       onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       tabIndex={-1}
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-blue-900/80 to-slate-800/80 backdrop-blur-sm animate-fadeIn" />
       <div className="absolute inset-0 flex items-center justify-center p-4" onClick={(e)=>e.stopPropagation()}>
-        <form onSubmit={handleSubmit} className="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-800">{editedAppointment? 'Randevu Düzenle' : 'Randevu Ekle'}</h3>
-            <button type="button" className="text-gray-500 hover:text-gray-700" onClick={onClose}>✕</button>
-          </div>
-          {error && (
-            <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Hasta seçimi (dar açılır panel) */}
-            <div ref={patientRef}>
-              <label className="block text-gray-700 text-sm font-medium mb-2">Hasta</label>
-              <div className="relative">
-                <button type="button" disabled={!!editedAppointment} onClick={()=>setPatientOpen(v=>!v)} className={`w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-left hover:border-gray-400 ${editedAppointment?'opacity-60 cursor-not-allowed':''}`}>
-                  {patients.find(p=>p.id===selectedPatient)?.fullName || 'Hasta seçin'}
-                </button>
-                {patientOpen && (
-                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50">
-                  <input value={searchPatient} onChange={e=>setSearchPatient(e.target.value)} placeholder="Ara" className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md mb-2" />
-                  <div className="max-h-[50vh] overflow-y-auto">
-                    {filteredPatients.map(p => (
-                      <button type="button" key={p.id} onClick={()=>{setSelectedPatient(p.id); setPatientOpen(false);}} className={`w-full text-left px-3 py-2 rounded-md hover:bg-green-50 cursor-pointer ${selectedPatient===p.id?'bg-green-100':''}`}>
-                        {p.fullName}
-                      </button>
-                    ))}
-                    {filteredPatients.length===0 && <div className="px-3 py-2 text-gray-500">Hasta bulunamadı</div>}
-                  </div>
+        <form onSubmit={handleSubmit} className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white/95 to-gray-50/95 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl transform animate-scaleIn">
+          {/* Modern Header */}
+          <div className="px-8 py-6 border-b border-gray-200/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-xl">{editedAppointment ? '✏️' : '📅'}</span>
                 </div>
-                )}
-              </div>
-            </div>
-
-            {/* Randevu tipi seçimi (dar açılır panel) */}
-            <div ref={typeRef}>
-              <label className="block text-gray-700 text-sm font-medium mb-2">Randevu Tipi</label>
-              <div className="relative">
-                <button type="button" onClick={()=>setTypeOpen(v=>!v)} className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-left hover:border-gray-400">
-                  {types.find(t=>t.id===selectedType)?.name || 'Tip seçin'}
-                </button>
-                {typeOpen && (
-                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50">
-                  <input value={searchType} onChange={e=>setSearchType(e.target.value)} placeholder="Ara" className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md mb-2" />
-                  <div className="max-h-[50vh] overflow-y-auto">
-                    {filteredTypes.map(t => (
-                      <button type="button" key={t.id} onClick={()=>{setSelectedType(t.id); setTypeOpen(false);}} className={`w-full text-left px-3 py-2 rounded-md hover:bg-green-50 cursor-pointer ${selectedType===t.id?'bg-green-100':''}`}>
-                        {t.name} • {t.durationMinutes} dk
-                      </button>
-                    ))}
-                    {filteredTypes.length===0 && <div className="px-3 py-2 text-gray-500">Tip bulunamadı</div>}
-                  </div>
+                <div>
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                    {editedAppointment ? 'Randevu Düzenle' : 'Yeni Randevu Ekle'}
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    {editedAppointment ? 'Mevcut randevuyu güncelleyin' : 'Yeni bir randevu oluşturun'}
+                  </p>
                 </div>
-                )}
               </div>
+              <button 
+                type="button" 
+                className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-all duration-200 hover:scale-110" 
+                onClick={onClose}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-gray-700 text-sm font-medium mb-2">Tarih</label>
-              <DayPicker mode="single" selected={selectedDate} onSelect={(d)=>d && setSelectedDate(d)} className="bg-white rounded-lg p-2 border border-gray-200" />
-            </div>
-            <div ref={timeRef}>
-              <label className="block text-gray-700 text-sm font-medium mb-2">Başlangıç Saati</label>
-              <div className="flex items-center gap-3 relative">
-                {/* Saat kontrolü */}
-                <div className="flex-1">
-                  <div className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded-lg px-3 py-2">
-                    <button type="button" onClick={()=>stepMinutes(-5)} className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">◀</button>
-                    <div className="flex items-center gap-2">
-                      <button type="button" onClick={()=>setHourOpen(v=>!v)} className="font-mono text-lg hover:text-emerald-600 cursor-pointer">{String(startHour).padStart(2,'0')}</button>
-                      :
-                      <button type="button" onClick={()=>setMinuteOpen(v=>!v)} className="font-mono text-lg hover:text-emerald-600 cursor-pointer">{String(startMinute).padStart(2,'0')}</button>
-                    </div>
-                    <button type="button" onClick={()=>stepMinutes(5)} className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">▶</button>
-                  </div>
-                  {/* Saat listesi */}
-                  {hourOpen && (
-                    <div className="absolute left-0 right-0 top-full mt-2 grid grid-cols-6 gap-2 bg-white border border-gray-200 rounded-lg p-2 shadow z-50">
-                      {Array.from({length: (17-8)+1}, (_,i)=>i+8).map(h=> {
-                        // Saatte en az bir geçerli dakika var mı?
-                        const anyValid = Array.from({length:12},(_,k)=>k*5).some(m=>!isStartDisabled(h,m));
-                        return (
-                          <button type="button" key={h} disabled={!anyValid}
-                            onClick={()=>{const {h:hh,m:mm}=clampToWorkHours(h,startMinute); setStartHour(hh); setStartMinute(mm); setHourOpen(false);}}
-                            className={`px-2 py-1 rounded ${h===startHour?'bg-green-100':'hover:bg-gray-100'} ${!anyValid?'opacity-40 cursor-not-allowed':'cursor-pointer hover:ring-1 hover:ring-emerald-200'}`}>{String(h).padStart(2,'0')}</button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {/* Dakika listesi */}
-                  {minuteOpen && (
-                    <div className="absolute left-0 right-0 top-full mt-2 grid grid-cols-6 gap-2 bg-white border border-gray-200 rounded-lg p-2 shadow z-50">
-                      {Array.from({length:12},(_,i)=>i*5).map(m=> {
-                        const dis = isStartDisabled(startHour, m);
-                        return (
-                          <button type="button" key={m} disabled={dis}
-                            onClick={()=>{if(dis) return; const {h:hh,m:mm}=clampToWorkHours(startHour,m); setStartHour(hh); setStartMinute(mm); setMinuteOpen(false);}}
-                            className={`px-2 py-1 rounded ${m===startMinute?'bg-green-100':'hover:bg-gray-100'} ${dis?'opacity-40 cursor-not-allowed':'cursor-pointer hover:ring-1 hover:ring-emerald-200'}`}>{String(m).padStart(2,'0')}</button>
-                        );
-                      })}
+          <div className="p-6 space-y-6">
+            {error && (
+              <div className="p-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-700 rounded-2xl shadow-sm animate-slideDown">
+                <div className="flex items-center gap-2">
+                  <span className="text-red-500">⚠️</span>
+                  {error}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Patient Selection */}
+              <div ref={patientRef} className="space-y-3">
+                <label className="block text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <span className="text-blue-500">👤</span>
+                  Hasta Seçimi
+                </label>
+                <div className="relative">
+                  <button 
+                    type="button" 
+                    disabled={!!editedAppointment} 
+                    onClick={()=>setPatientOpen(v=>!v)} 
+                    className={`w-full px-4 py-3 bg-white/90 backdrop-blur-sm border border-gray-300/50 rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md font-medium ${editedAppointment?'opacity-60 cursor-not-allowed':'hover:border-blue-400'}`}
+                  >
+                    {patients.find(p=>p.id===selectedPatient)?.fullName || 'Hasta seçin...'}
+                  </button>
+                  {patientOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-2xl p-4 z-50">
+                      <input 
+                        value={searchPatient} 
+                        onChange={e=>setSearchPatient(e.target.value)} 
+                        placeholder="Hasta ara..." 
+                        className="w-full px-4 py-2 bg-gray-50/80 border border-gray-200 rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                      />
+                      <div className="max-h-[50vh] overflow-y-auto custom-scrollbar">
+                        {filteredPatients.map(p => (
+                          <button 
+                            type="button" 
+                            key={p.id} 
+                            onClick={()=>{setSelectedPatient(p.id); setPatientOpen(false);}} 
+                            className={`w-full text-left px-4 py-3 rounded-xl hover:bg-blue-50 transition-all duration-200 cursor-pointer ${selectedPatient===p.id?'bg-blue-100 border border-blue-200':'hover:shadow-sm'}`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+                                <span className="text-blue-600 text-sm">👤</span>
+                              </div>
+                              <span className="font-medium">{p.fullName}</span>
+                            </div>
+                          </button>
+                        ))}
+                        {filteredPatients.length===0 && (
+                          <div className="px-4 py-6 text-center text-gray-500">
+                            <div className="text-2xl mb-2">🔍</div>
+                            <div>Hasta bulunamadı</div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
-              <div className="mt-2 text-sm text-gray-600">Bitiş: {endTime ?? '-'}</div>
-              {!withinWorkHours && <div className="mt-2 text-sm text-red-600">Mesai dışı seçim. 08:00-17:30 aralığında seçin.</div>}
-              {minSelectableTimeToday && (
-                <div className="mt-1 text-xs text-gray-500">Bugün için minimum saat: {minSelectableTimeToday}</div>
-              )}
-              {/* Aksiyon butonları: saat seçiminin hemen altında */}
-              <div className="flex items-center justify-end gap-3 pt-4">
-                <button type="button" onClick={onClose} className="px-5 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">İptal</button>
-                <button type="submit" disabled={loading} className="px-5 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg disabled:opacity-50 transform-gpu transition-transform duration-150 hover:scale-105">{loading?'Kaydediliyor...':'Randevu Ekle'}</button>
+
+              {/* Appointment Type Selection */}
+              <div ref={typeRef} className="space-y-3">
+                <label className="block text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <span className="text-green-500">📋</span>
+                  Randevu Tipi
+                </label>
+                <div className="relative">
+                  <button 
+                    type="button" 
+                    onClick={()=>setTypeOpen(v=>!v)} 
+                    className="w-full px-4 py-3 bg-white/90 backdrop-blur-sm border border-gray-300/50 rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all duration-200 shadow-sm hover:shadow-md font-medium hover:border-green-400"
+                  >
+                    {types.find(t=>t.id===selectedType)?.name || 'Randevu tipi seçin...'}
+                  </button>
+                  {typeOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-2xl p-4 z-50">
+                      <input 
+                        value={searchType} 
+                        onChange={e=>setSearchType(e.target.value)} 
+                        placeholder="Randevu tipi ara..." 
+                        className="w-full px-4 py-2 bg-gray-50/80 border border-gray-200 rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-green-500/50"
+                      />
+                      <div className="max-h-[50vh] overflow-y-auto custom-scrollbar">
+                        {filteredTypes.map(t => (
+                          <button 
+                            type="button" 
+                            key={t.id} 
+                            onClick={()=>{setSelectedType(t.id); setTypeOpen(false);}} 
+                            className={`w-full text-left px-4 py-3 rounded-xl hover:bg-green-50 transition-all duration-200 cursor-pointer ${selectedType===t.id?'bg-green-100 border border-green-200':'hover:shadow-sm'}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center">
+                                  <span className="text-green-600 text-sm">📋</span>
+                                </div>
+                                <span className="font-medium">{t.name}</span>
+                              </div>
+                              <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full font-semibold">
+                                {t.durationMinutes} dk
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                        {filteredTypes.length===0 && (
+                          <div className="px-4 py-6 text-center text-gray-500">
+                            <div className="text-2xl mb-2">🔍</div>
+                            <div>Randevu tipi bulunamadı</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Date Selection */}
+              <div className="space-y-3">
+                <label className="block text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <span className="text-purple-500">📅</span>
+                  Randevu Tarihi
+                </label>
+                <div className="bg-white/90 backdrop-blur-sm border border-purple-300/50 rounded-2xl p-3 pb-1 shadow-sm">
+                  <DayPicker 
+                    mode="single" 
+                    selected={selectedDate} 
+                    onSelect={(d)=>d && setSelectedDate(d)} 
+                    className="w-full"
+                    styles={{
+                      month: { fontSize: '14px', width: '100%' },
+                      caption: { fontSize: '16px', marginBottom: '8px' },
+                      table: { fontSize: '13px', width: '100%', tableLayout: 'fixed' },
+                      day: { fontSize: '13px', padding: '12px', height: '48px', width: '48px' },
+                      head_cell: { fontSize: '12px', padding: '8px', textAlign: 'center' },
+                      nav: { fontSize: '14px' }
+                    }}
+                  />
+                </div>
+              </div>
+              {/* Available Time Slots - Right Column */}
+              <div className="space-y-3">
+                <label className="block text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <span className="text-green-500">🕒</span>
+                  Müsait Saatler ({selectedDate.toLocaleDateString('tr-TR')})
+                </label>
+                <div className="bg-white/90 backdrop-blur-sm border border-green-300/50 rounded-2xl shadow-sm">
+                  {allTimeSlots.length > 0 ? (
+                    <div className="grid grid-cols-4 gap-2 p-4 max-h-64 overflow-y-auto">
+                      {allTimeSlots.map((slot, index) => (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          disabled={!slot.available}
+                          onClick={() => {
+                            if (slot.available) {
+                              const [h, m] = slot.time.split(':').map(Number);
+                              setStartHour(h);
+                              setStartMinute(m);
+                            }
+                          }}
+                          className={`px-3 py-2 text-sm rounded-lg border transition-all duration-200 font-medium ${
+                            slot.isPast
+                              ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60'
+                              : slot.hasConflict
+                                ? 'bg-red-100 text-red-400 border-red-200 cursor-not-allowed opacity-60'
+                                : startTime === slot.time 
+                                  ? 'bg-green-600 text-white border-green-700 shadow-md hover:scale-105' 
+                                  : 'bg-green-50 hover:bg-green-100 text-green-700 border-green-200 hover:scale-105'
+                          }`}
+                        >
+                          {slot.time}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <div className="text-4xl mb-2">❌</div>
+                      <div className="text-lg font-medium">Bu tarihte saat bulunmuyor</div>
+                      <div className="text-sm">Lütfen başka bir tarih seçin</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Time Information */}
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg px-3 py-2">
+                    <span className="text-xs font-medium text-gray-600">Bitiş Saati:</span>
+                    <span className="text-xs font-bold text-gray-800">{endTime ?? '-'}</span>
+                  </div>
+                  {!withinWorkHours && (
+                    <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-red-600">
+                        <span>⚠️</span>
+                        <span className="text-xs font-medium">Mesai dışı seçim. 08:00-17:30 aralığında seçin.</span>
+                      </div>
+                    </div>
+                  )}
+                  {minSelectableTimeToday && (
+                    <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-blue-600">
+                        <span>ℹ️</span>
+                        <span className="text-xs font-medium">Bugün için minimum saat: {minSelectableTimeToday}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Notes Section - Right Column */}
+                <div className="space-y-2 mt-4">
+                  <label className="block text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <span className="text-yellow-500">📝</span>
+                    Notlar (Opsiyonel)
+                  </label>
+                  <div className="bg-white/90 backdrop-blur-sm border border-yellow-300/50 rounded-xl p-3 shadow-sm">
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Randevu notları..."
+                      rows={3}
+                      maxLength={500}
+                      className="w-full px-3 py-2 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 transition-all duration-200 shadow-sm hover:shadow-md font-medium resize-none text-sm"
+                    />
+                    <div className="flex items-center justify-between mt-1 text-xs text-gray-500">
+                      <span className="text-yellow-500">💡</span>
+                      <span className={`${notes.length > 450 ? 'text-red-500' : 'text-gray-400'}`}>
+                        {notes.length}/500
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-4 pt-4 mt-4 border-t border-gray-200/50">
+              <button 
+                type="button" 
+                onClick={onClose} 
+                className="px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-xl border border-gray-300 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
+              >
+                İptal
+              </button>
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2 min-w-[160px] justify-center"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Kaydediliyor...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg">{editedAppointment ? '💾' : '📅'}</span>
+                    <span>{editedAppointment ? 'Güncelle' : 'Randevu Ekle'}</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </form>

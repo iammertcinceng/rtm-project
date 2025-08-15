@@ -3,6 +3,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import AppointmentModal from '../components/AppointmentModal';
 import AppointmentTypeManager from '../components/AppointmentTypeManager';
+import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
 
 const Appointments: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -10,7 +11,9 @@ const Appointments: React.FC = () => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openTypeModal, setOpenTypeModal] = useState(false);
+  const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [editedAppointment, setEditedAppointment] = useState<any | null>(null);
+  const [viewedAppointment, setViewedAppointment] = useState<any | null>(null);
 
   // Utils for time math
   const timeToMinutes = (t: string) => {
@@ -242,7 +245,11 @@ const Appointments: React.FC = () => {
                   <div className="flex flex-col items-center justify-center gap-2 w-12">
                     {hasAny ? (
                       <>
-                        <button title="İncele" className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-blue-300 hover:text-blue-200 transition-colors duration-150 cursor-pointer">👁️</button>
+                        <button 
+                          title="İncele" 
+                          onClick={() => { setViewedAppointment(list[0].a); setOpenDetailsModal(true); }}
+                          className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-blue-300 hover:text-blue-200 transition-colors duration-150 cursor-pointer"
+                        >👁️</button>
                         <button
                           title="Düzenle"
                           onClick={() => { setEditedAppointment(list[0].a); setOpenAddModal(true); }}
@@ -310,6 +317,24 @@ const Appointments: React.FC = () => {
         isOpen={openTypeModal}
         onClose={() => setOpenTypeModal(false)}
         onAdded={() => { /* types modal eklemeden sonra, seçim listesi AppointmentModal içinde dinamik gelecek */ }}
+      />
+      <AppointmentDetailsModal
+        isOpen={openDetailsModal}
+        onClose={() => { setOpenDetailsModal(false); setViewedAppointment(null); }}
+        appointment={viewedAppointment}
+        onDeleted={() => {
+          // refresh appointments after delete
+          (async () => {
+            const qDay = query(
+              collection(db, 'appointments'),
+              where('dateISO', '==', dateISO)
+            );
+            const snap = await getDocs(qDay);
+            const list = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+            list.sort((a,b) => String(a.start||'').localeCompare(String(b.start||'')));
+            setAppointments(list);
+          })();
+        }}
       />
     </div>
   );
